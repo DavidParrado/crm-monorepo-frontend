@@ -7,6 +7,8 @@ import { MainLayout } from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
+import ClientDetail from "./pages/ClientDetail";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +23,9 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/clients/:id" element={<ClientDetail />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/profile" element={<Profile />} />
             {/* Rutas de admin se agregarán en la siguiente iteración */}
           </Route>
           <Route path="*" element={<NotFound />} />

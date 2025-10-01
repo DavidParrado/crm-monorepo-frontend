@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Users, UserCheck, PhoneCall, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Users, UserCheck, PhoneCall, Clock, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,6 +81,7 @@ const mockClients = [
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -222,7 +224,12 @@ export default function Dashboard() {
                       {client.lastContact}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/clients/${client.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
                         Ver detalle
                       </Button>
                     </TableCell>
