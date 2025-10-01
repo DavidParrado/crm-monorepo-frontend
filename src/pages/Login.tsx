@@ -73,7 +73,7 @@ export default function Login() {
               <Input
                 id="username"
                 type="username"
-                placeholder="tu_usuario"
+                placeholder="username"
                 {...register("username")}
                 className={errors.username ? "border-destructive" : ""}
               />

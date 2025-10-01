@@ -24,10 +24,11 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { capitalize } from "@/lib/utils";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'team_leader', 'agent'] },
-  { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'team_leader', 'agent'] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
+  { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
 ];
 
 const adminItems = [
@@ -42,12 +43,12 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   const canAccessRoute = (routeRoles: string[]) => {
-    return user && routeRoles.includes(user.role);
+    return user && routeRoles.includes(user.role.name.toLocaleLowerCase());
   };
 
   const getInitials = () => {
     if (!user) return "U";
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    return `${user.firstName[0]}${user.lastName[0] ?? ''}`.toUpperCase();
   };
 
   const getNavClass = (isActive: boolean) => {
@@ -98,8 +99,8 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user?.role === 'admin' && (
-          <SidebarGroup>
+        {user?.role.name.toLocaleLowerCase() === 'admin' && (
+          <SidebarGroup className="group-data-[collapsible=icon]:px-2">
             <SidebarGroupLabel>
               Administración
             </SidebarGroupLabel>
@@ -127,7 +128,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-4 group-data-[collapsible=icon]:px-2">
         <div className="space-y-3">
           <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-8 w-8">
@@ -137,7 +138,7 @@ export function AppSidebar() {
             </Avatar>
             <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {user?.firstName} {user?.lastName}
+                {capitalize(user?.firstName + ' ' + user?.lastName)}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
                 {user?.email}
@@ -145,7 +146,7 @@ export function AppSidebar() {
             </div>
           </div>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0"
             onClick={logout}

@@ -6,7 +6,8 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'admin' | 'team_leader' | 'agent';
+  roleId: number;
+  role: { id: number; name: string; };
   teamLeaderId?: string;
 }
 
