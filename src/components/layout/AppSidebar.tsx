@@ -7,6 +7,7 @@ import {
   Settings,
   LogOut,
   Building2,
+  UserCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ import { capitalize } from "@/lib/utils";
 const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
   { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
+  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
 ];
 
 const adminItems = [
@@ -59,80 +61,67 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        {!isCollapsed && (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-sidebar-primary" />
-            <span className="font-bold text-lg text-sidebar-foreground">CRM Pro</span>
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
+          <div className="rounded-lg bg-primary p-2">
+            <Building2 className="h-5 w-5 text-primary-foreground" />
           </div>
-        )}
-        {isCollapsed && (
-          <Building2 className="h-6 w-6 text-sidebar-primary mx-auto" />
-        )}
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="text-lg font-bold text-sidebar-foreground">CRM Pro</span>
+            <span className="text-xs text-sidebar-foreground/60">Sistema de Gestión</span>
+          </div>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2">
-        <SidebarGroup>
+      <SidebarContent>
+        <SidebarGroup className="px-2">
           <SidebarGroupLabel>
-            Principal
+            Navegación
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainItems.map((item) => {
-                if (!canAccessRoute(item.roles)) return null;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end
-                        className={({ isActive }) => getNavClass(isActive)}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {mainItems.filter(item => canAccessRoute(item.roles)).map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild className="group-data-[collapsible=icon]:justify-center">
+                    <NavLink to={item.url} end className={({ isActive }) => getNavClass(isActive)}>
+                      <item.icon className="h-4 w-4" />
+                      <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {user?.role.name.toLocaleLowerCase() === 'admin' && (
-          <SidebarGroup className="group-data-[collapsible=icon]:px-2">
+          <SidebarGroup className="px-2">
             <SidebarGroupLabel>
               Administración
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => {
-                  if (!canAccessRoute(item.roles)) return null;
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <NavLink
-                          to={item.url}
-                          className={({ isActive }) => getNavClass(isActive)}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="group-data-[collapsible=icon]:justify-center">
+                      <NavLink to={item.url} className={({ isActive }) => getNavClass(isActive)}>
+                        <item.icon className="h-4 w-4" />
+                        <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-4 py-4 group-data-[collapsible=icon]:px-2">
+      <SidebarFooter className="border-t border-sidebar-border px-4 py-4">
         <div className="space-y-3">
           <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
@@ -148,11 +137,11 @@ export function AppSidebar() {
           <Button
             variant="secondary"
             size="sm"
-            className="w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:p-0"
+            className="w-full justify-start group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:px-2"
             onClick={logout}
           >
             <LogOut className="h-4 w-4 group-data-[collapsible=icon]:mr-0 mr-2" />
-            <span className="group-data-[collapsible=icon]:hidden">Salir</span>
+            <span className="group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>
           </Button>
         </div>
       </SidebarFooter>
