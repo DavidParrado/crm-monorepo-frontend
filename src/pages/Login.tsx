@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 
 const loginSchema = z.object({
-  email: z.string().email("Correo electrónico inválido").min(1, "El correo es requerido"),
+  username: z.string().min(1, "El nombre de usuario es requerido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
 });
 
@@ -40,7 +40,7 @@ export default function Login() {
   const onSubmit = async (data: LoginForm) => {
     setError(null);
     try {
-      await login(data.email, data.password);
+      await login(data.username, data.password);
       toast.success("¡Bienvenido!");
       navigate("/");
     } catch (err) {
@@ -69,16 +69,16 @@ export default function Login() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="username">Nombre de usuario</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                {...register("email")}
-                className={errors.email ? "border-destructive" : ""}
+                id="username"
+                type="username"
+                placeholder="tu_usuario"
+                {...register("username")}
+                className={errors.username ? "border-destructive" : ""}
               />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username.message}</p>
               )}
             </div>
 

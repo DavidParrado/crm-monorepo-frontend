@@ -22,7 +22,7 @@ interface AuthState {
 }
 
 // API base URL - ajustar según tu backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -32,13 +32,13 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email: string, password: string) => {
+      login: async (username: string, password: string) => {
         set({ isLoading: true });
         try {
           const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ username, password }),
           });
 
           if (!response.ok) {
