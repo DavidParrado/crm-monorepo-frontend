@@ -1,8 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar as CalendarIcon } from "lucide-react";
+import { Plus } from "lucide-react";
+import CalendarView from "@/components/calendar/CalendarView";
+import AppointmentModal from "@/components/calendar/AppointmentModal";
 
 export default function Calendar() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -12,31 +21,19 @@ export default function Calendar() {
             Gestiona tus citas y recordatorios
           </p>
         </div>
-        <Button className="gap-2">
+        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Nueva Cita
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Vista de Calendario</CardTitle>
-        </CardHeader>
-        <CardContent className="min-h-[500px] flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="rounded-full bg-primary/10 p-6 inline-block">
-              <CalendarIcon className="h-12 w-12 text-primary" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Calendario en construcción</h3>
-              <p className="text-muted-foreground max-w-md">
-                El componente de calendario se implementará próximamente con funcionalidades
-                de creación, edición y notificaciones de citas.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <CalendarView key={refreshKey} />
+
+      <AppointmentModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        onSuccess={handleSuccess}
+      />
     </div>
   );
 }
