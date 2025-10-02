@@ -22,6 +22,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { AlertCircle } from "lucide-react";
+import { useAuthStore } from "@/store/authStore";
+import { API_URL } from "@/lib/constants";
 
 const formSchema = z.object({
   newPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
@@ -44,6 +46,7 @@ export function ResetPasswordModal({
   onOpenChange,
   onPasswordReset,
 }: ResetPasswordModalProps) {
+  const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -57,9 +60,9 @@ export function ResetPasswordModal({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
     try {
-      const response = await fetch(`/users/${user.id}/password`, {
+      const response = await fetch(`${API_URL}/users/${user.id}/password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify({ newPassword: values.newPassword }),
       });
 

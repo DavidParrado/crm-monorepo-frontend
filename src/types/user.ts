@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName?: string;
   username: string;
-  ext?: number | null;
+  ext?: string | null;
   createdAt: Date;
   updatedAt: Date;
   roleId: number;

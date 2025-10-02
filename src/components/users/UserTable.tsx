@@ -16,13 +16,12 @@ import { EditUserModal } from "./EditUserModal";
 import { ResetPasswordModal } from "./ResetPasswordModal";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 interface UsersResponse {
-  users: User[];
+  data: User[];
   total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 }
 
 interface UserTableProps {
@@ -30,6 +29,7 @@ interface UserTableProps {
 }
 
 export function UserTable({ onUserUpdated }: UserTableProps) {
+  const { token } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,13 +53,18 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
         params.append("search", search);
       }
 
-      const response = await fetch(`/users?${params}`);
+      const response = await fetch(`${API_URL}/users?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       if (!response.ok) throw new Error("Error al cargar usuarios");
 
       const data: UsersResponse = await response.json();
-      setUsers(data.users);
+      const totalPages = Math.ceil(data.total / limit);
+      setUsers(data.data);
       setTotal(data.total);
-      setTotalPages(data.totalPages);
+      setTotalPages(totalPages);
     } catch (error) {
       toast({
         title: "Error",

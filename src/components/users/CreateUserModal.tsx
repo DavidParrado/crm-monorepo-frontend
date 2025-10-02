@@ -29,6 +29,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Role } from "@/types/role";
 import { Group } from "@/types/group";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "El nombre es requerido"),
@@ -47,6 +49,7 @@ interface CreateUserModalProps {
 }
 
 export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUserModalProps) {
+  const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [roles, setRoles] = useState<Role[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
@@ -73,7 +76,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   const fetchRoles = async () => {
     try {
-      const response = await fetch("/roles");
+      const response = await fetch(`${API_URL}/roles`);
       if (!response.ok) throw new Error();
       const data = await response.json();
       setRoles(data);
@@ -88,7 +91,9 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   const fetchGroups = async () => {
     try {
-      const response = await fetch("/groups");
+      const response = await fetch(`${API_URL}/groups`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error();
       const data = await response.json();
       setGroups(data);
@@ -108,12 +113,12 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
         ...values,
         roleId: parseInt(values.roleId),
         groupId: values.groupId ? parseInt(values.groupId) : null,
-        ext: values.ext ? parseInt(values.ext) : null,
+        ext: values.ext ? values.ext : null,
       };
 
-      const response = await fetch("/users", {
+      const response = await fetch(`${API_URL}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
 
