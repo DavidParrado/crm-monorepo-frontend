@@ -1,25 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Phone, User, Users, Calendar } from "lucide-react";
+import { Client } from "@/types/client";
 
-interface Client {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  status: { id: number; name: string; };
-  group?: { id: number; name: string; };
-  assignedTo?: { id: string; firstName: string; lastName: string; };
-  createdAt: string;
-  updatedAt: string;
-}
+
 
 interface ClientInfoProps {
   client: Client;
+  children?: React.ReactNode;
 }
 
-export function ClientInfo({ client }: ClientInfoProps) {
+export function ClientInfo({ client, children }: ClientInfoProps) {
   return (
     <Card>
       <CardHeader>
@@ -30,7 +21,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
           <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">Email</p>
-            <p className="text-sm">{client.email}</p>
+            <p className="text-sm">{client.email ?? 'No disponible'}</p>
           </div>
         </div>
 
@@ -38,7 +29,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
           <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">Teléfono</p>
-            <p className="text-sm">{client.phone}</p>
+            <p className="text-sm">{client.phone ?? 'No disponible'}</p>
           </div>
         </div>
 
@@ -47,7 +38,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
           <div className="flex-1">
             <p className="text-sm font-medium text-muted-foreground">Estado</p>
             <Badge variant="outline" className="mt-1">
-              {client.status.name}
+              {client.status.name ?? 'No disponible'}
             </Badge>
           </div>
         </div>
@@ -57,7 +48,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
             <Users className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-medium text-muted-foreground">Grupo</p>
-              <p className="text-sm">{client.group.name}</p>
+              <p className="text-sm">{client.group.name ?? 'No disponible'}</p>
             </div>
           </div>
         )}
@@ -68,7 +59,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
             <div className="flex-1">
               <p className="text-sm font-medium text-muted-foreground">Asignado a</p>
               <p className="text-sm">
-                {client.assignedTo.firstName} {client.assignedTo.lastName}
+                {client.assignedTo.firstName} {client.assignedTo?.lastName ?? ''}
               </p>
             </div>
           </div>
@@ -87,6 +78,7 @@ export function ClientInfo({ client }: ClientInfoProps) {
             </p>
           </div>
         </div>
+        {children}
       </CardContent>
     </Card>
   );

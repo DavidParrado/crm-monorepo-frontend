@@ -22,21 +22,17 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { Management } from "@/types/management";
 
 const noteSchema = z.object({
-  content: z.string().min(1, "El contenido es requerido").max(1000, "Máximo 1000 caracteres"),
+  content: z.string().min(5, "Mínimo 5 caracteres").max(1000, "Máximo 1000 caracteres"),
   managementId: z.string().min(1, "Debes seleccionar una gestión"),
 });
 
 type NoteFormData = z.infer<typeof noteSchema>;
 
-interface Management {
-  id: number;
-  name: string;
-}
-
 interface CreateNoteFormProps {
-  clientId: string;
+  clientId: number;
   onNoteCreated: () => void;
 }
 

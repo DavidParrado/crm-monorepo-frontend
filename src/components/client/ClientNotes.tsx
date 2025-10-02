@@ -5,27 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Note } from "@/types/notes";
 
-interface Note {
-  id: string;
-  content: string;
-  management: { id: number; name: string; };
-  createdBy: { id: string; firstName: string; lastName: string; };
-  createdAt: string;
-}
 
 interface NotesResponse {
   data: Note[];
-  meta: {
-    page: number;
-    limit: number;
-    totalPages: number;
-    totalItems: number;
-  };
+  total: number;
 }
 
 interface ClientNotesProps {
-  clientId: string;
+  clientId: number;
   refresh: number;
 }
 
@@ -59,8 +48,9 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
         }
 
         const data: NotesResponse = await response.json();
+        const totalPages = Math.ceil(data.total / limit);
         setNotes(data.data);
-        setTotalPages(data.meta.totalPages);
+        setTotalPages(totalPages);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Error al cargar las notas');
       } finally {
@@ -100,7 +90,7 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>
-                    {note.createdBy.firstName} {note.createdBy.lastName}
+                    {note.user.firstName} {note.user?.lastName}
                   </span>
                   <span>
                     {new Date(note.createdAt).toLocaleDateString('es-ES', {

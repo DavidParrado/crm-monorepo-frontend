@@ -1,15 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  roleId: number;
-  role: { id: number; name: string; };
-  teamLeaderId?: string;
-}
+import { User } from '@/types/user';
 
 interface AuthState {
   user: User | null;
@@ -92,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const user = await response.json();
+          console.log('Authenticated user:', user);
           set({ user, isAuthenticated: true });
         } catch (error) {
           set({ user: null, token: null, isAuthenticated: false });

@@ -2,25 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "sonner";
 import { ClientInfo } from "@/components/client/ClientInfo";
 import { ClientNotes } from "@/components/client/ClientNotes";
 import { CreateNoteForm } from "@/components/client/CreateNoteForm";
-
-interface Client {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  status: { id: number; name: string; };
-  group?: { id: number; name: string; };
-  assignedTo?: { id: string; firstName: string; lastName: string; };
-  createdAt: string;
-  updatedAt: string;
-}
+import { Client } from "@/types/client";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
 
@@ -135,20 +122,14 @@ export default function ClientDetail() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <ClientInfo client={client} />
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <ClientInfo client={client}>
+            <CreateNoteForm clientId={client.id} onNoteCreated={handleNoteCreated} />
+          </ClientInfo>
         </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Crear Nueva Nota</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CreateNoteForm clientId={client.id} onNoteCreated={handleNoteCreated} />
-            </CardContent>
-          </Card>
+        <div className="lg:col-span-3">
 
           <ClientNotes clientId={client.id} refresh={refreshNotes} />
         </div>
