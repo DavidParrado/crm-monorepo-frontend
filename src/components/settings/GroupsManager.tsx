@@ -31,8 +31,11 @@ import {
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Group } from "@/types/group";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 export default function GroupsManager() {
+  const { token } = useAuthStore();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -48,7 +51,11 @@ export default function GroupsManager() {
 
   const fetchGroups = async () => {
     try {
-      const response = await fetch("http://localhost:3000/groups");
+      const response = await fetch(`${API_URL}/groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
       if (!response.ok) throw new Error("Error al cargar grupos");
       const data = await response.json();
       setGroups(data);
@@ -74,9 +81,9 @@ export default function GroupsManager() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/groups", {
+      const response = await fetch(`${API_URL}/groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -103,9 +110,9 @@ export default function GroupsManager() {
     if (!selectedGroup || !formData.name.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/groups/${selectedGroup.id}`, {
+      const response = await fetch(`${API_URL}/groups/${selectedGroup.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -133,8 +140,9 @@ export default function GroupsManager() {
     if (!selectedGroup) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/groups/${selectedGroup.id}`, {
+      const response = await fetch(`${API_URL}/groups/${selectedGroup.id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Error al eliminar grupo");

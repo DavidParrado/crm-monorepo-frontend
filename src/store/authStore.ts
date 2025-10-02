@@ -84,7 +84,6 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const user = await response.json();
-          console.log('Authenticated user:', user);
           set({ user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ user: null, token: null, isAuthenticated: false, isLoading: false });

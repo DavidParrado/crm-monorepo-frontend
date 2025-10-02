@@ -9,6 +9,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 import { Appointment } from "@/types/appointment";
 
 interface DeleteAppointmentDialogProps {
@@ -24,14 +26,16 @@ export default function DeleteAppointmentDialog({
   appointment,
   onSuccess,
 }: DeleteAppointmentDialogProps) {
+  const { token } = useAuthStore();
   const { toast } = useToast();
 
   const handleDelete = async () => {
     if (!appointment) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/appointments/${appointment.id}`, {
+      const response = await fetch(`${API_URL}/appointments/${appointment.id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Error al eliminar la cita");

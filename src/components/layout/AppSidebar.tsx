@@ -28,9 +28,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { capitalize } from "@/lib/utils";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
-  { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
-  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: ['admin', 'teamleaderftd', 'agenteftd'] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
+  { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
+  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
 ];
 
 const adminItems = [

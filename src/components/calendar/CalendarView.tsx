@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import AppointmentModal from "./AppointmentModal";
 import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
+import { API_URL } from "@/lib/constants";
 
 export default function CalendarView() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -33,7 +34,7 @@ export default function CalendarView() {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch("http://localhost:3000/appointments");
+      const response = await fetch(`${API_URL}/appointments`);
       if (!response.ok) throw new Error("Error al cargar citas");
       const data = await response.json();
       setAppointments(data);

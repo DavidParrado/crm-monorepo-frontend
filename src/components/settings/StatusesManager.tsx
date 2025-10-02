@@ -31,8 +31,11 @@ import {
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Status } from "@/types/status";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 export default function StatusesManager() {
+  const { token } = useAuthStore();
   const [statuses, setStatuses] = useState<Status[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -48,7 +51,11 @@ export default function StatusesManager() {
 
   const fetchStatuses = async () => {
     try {
-      const response = await fetch("http://localhost:3000/client-statuses");
+      const response = await fetch(`${API_URL}/client-statuses`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
       if (!response.ok) throw new Error("Error al cargar estados");
       const data = await response.json();
       setStatuses(data);
@@ -74,9 +81,9 @@ export default function StatusesManager() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/client-statuses", {
+      const response = await fetch(`${API_URL}/client-statuses`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -103,9 +110,9 @@ export default function StatusesManager() {
     if (!selectedStatus || !formData.name.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/client-statuses/${selectedStatus.id}`, {
+      const response = await fetch(`${API_URL}/client-statuses/${selectedStatus.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -133,8 +140,9 @@ export default function StatusesManager() {
     if (!selectedStatus) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/client-statuses/${selectedStatus.id}`, {
+      const response = await fetch(`${API_URL}/client-statuses/${selectedStatus.id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Error al eliminar estado");

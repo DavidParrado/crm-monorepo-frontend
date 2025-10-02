@@ -31,8 +31,11 @@ import {
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Management } from "@/types/management";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 export default function ManagementsManager() {
+  const { token } = useAuthStore();
   const [managements, setManagements] = useState<Management[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -48,7 +51,11 @@ export default function ManagementsManager() {
 
   const fetchManagements = async () => {
     try {
-      const response = await fetch("http://localhost:3000/managements");
+      const response = await fetch(`${API_URL}/managements`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
       if (!response.ok) throw new Error("Error al cargar gestiones");
       const data = await response.json();
       setManagements(data);
@@ -74,9 +81,9 @@ export default function ManagementsManager() {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/managements", {
+      const response = await fetch(`${API_URL}/managements`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -103,9 +110,9 @@ export default function ManagementsManager() {
     if (!selectedManagement || !formData.name.trim()) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/managements/${selectedManagement.id}`, {
+      const response = await fetch(`${API_URL}/managements/${selectedManagement.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(formData),
       });
 
@@ -133,8 +140,9 @@ export default function ManagementsManager() {
     if (!selectedManagement) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/managements/${selectedManagement.id}`, {
+      const response = await fetch(`${API_URL}/managements/${selectedManagement.id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) throw new Error("Error al eliminar gestión");

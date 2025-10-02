@@ -22,6 +22,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
 import { Client } from "@/types/client";
 import { format } from "date-fns";
+import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -36,6 +38,7 @@ export default function AppointmentModal({
   appointment,
   onSuccess,
 }: AppointmentModalProps) {
+  const { token } = useAuthStore();
   const [clients, setClients] = useState<Client[]>([]);
   const [formData, setFormData] = useState({
     clientId: "",
@@ -69,7 +72,7 @@ export default function AppointmentModal({
 
   const fetchClients = async () => {
     try {
-      const response = await fetch("http://localhost:3000/clients?limit=1000");
+      const response = await fetch(`${API_URL}/clients?limit=${1000}`);
       if (!response.ok) throw new Error("Error al cargar clientes");
       const data = await response.json();
       setClients(data.data);
@@ -96,8 +99,8 @@ export default function AppointmentModal({
 
     try {
       const url = appointment
-        ? `http://localhost:3000/appointments/${appointment.id}`
-        : "http://localhost:3000/appointments";
+        ? `${API_URL}/appointments/${appointment.id}`
+        : `${API_URL}/appointments`;
 
       const method = appointment ? "PATCH" : "POST";
 
@@ -116,7 +119,7 @@ export default function AppointmentModal({
 
       const response = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
 
