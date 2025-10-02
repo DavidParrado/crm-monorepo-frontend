@@ -44,7 +44,8 @@ export default function AppointmentModal({
     clientId: "",
     title: "",
     description: "",
-    appointmentDate: "",
+    date: "",
+    time: ""
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -54,17 +55,19 @@ export default function AppointmentModal({
       fetchClients();
       if (appointment) {
         setFormData({
-          clientId: appointment.clientId.toString(),
+          clientId: appointment.clientId?.toString(),
           title: appointment.title,
           description: appointment.description || "",
-          appointmentDate: format(new Date(appointment.appointmentDate), "yyyy-MM-dd'T'HH:mm"),
+          date: format(new Date(appointment.date), "yyyy-MM-dd"),
+          time: format(new Date(appointment.date), "HH:mm"),
         });
       } else {
         setFormData({
           clientId: "",
           title: "",
           description: "",
-          appointmentDate: "",
+          date: "",
+          time: "",
         });
       }
     }
@@ -72,7 +75,9 @@ export default function AppointmentModal({
 
   const fetchClients = async () => {
     try {
-      const response = await fetch(`${API_URL}/clients?limit=${1000}`);
+      const response = await fetch(`${API_URL}/clients?limit=${1000}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error("Error al cargar clientes");
       const data = await response.json();
       setClients(data.data);
@@ -86,7 +91,7 @@ export default function AppointmentModal({
   };
 
   const handleSubmit = async () => {
-    if (!formData.clientId || !formData.title || !formData.appointmentDate) {
+    if (!formData.clientId || !formData.title || !formData.date || !formData.time) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos requeridos",
@@ -106,16 +111,18 @@ export default function AppointmentModal({
 
       const body: CreateAppointmentData | UpdateAppointmentData = appointment
         ? {
-            title: formData.title,
-            description: formData.description || undefined,
-            appointmentDate: formData.appointmentDate,
-          }
+          title: formData.title,
+          description: formData.description || undefined,
+          date: formData.date,
+          time: formData.time,
+        }
         : {
-            clientId: parseInt(formData.clientId),
-            title: formData.title,
-            description: formData.description || undefined,
-            appointmentDate: formData.appointmentDate,
-          };
+          // clientId: parseInt(formData.clientId),
+          title: formData.title,
+          description: formData.description || undefined,
+          date: formData.date,
+          time: formData.time,
+        };
 
       const response = await fetch(url, {
         method,
@@ -203,18 +210,31 @@ export default function AppointmentModal({
               placeholder="Detalles de la cita"
               rows={3}
             />
-          </div>
 
-          <div>
-            <Label htmlFor="appointmentDate">Fecha y Hora *</Label>
-            <Input
-              id="appointmentDate"
-              type="datetime-local"
-              value={formData.appointmentDate}
-              onChange={(e) =>
-                setFormData({ ...formData, appointmentDate: e.target.value })
-              }
-            />
+            <div className="flex gap-2 w-full mt-3">
+              <div className="flex-1">
+                <Label htmlFor="date">Fecha *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex-1">
+                <Label htmlFor="time">Hora *</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={formData.time}
+                  onChange={(e) =>
+                    setFormData({ ...formData, time: e.target.value })
+                  }
+                />
+              </div>
+            </div>
           </div>
         </div>
 

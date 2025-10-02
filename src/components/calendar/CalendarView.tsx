@@ -18,8 +18,10 @@ import { es } from "date-fns/locale";
 import AppointmentModal from "./AppointmentModal";
 import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
 import { API_URL } from "@/lib/constants";
+import { useAuthStore } from "@/store/authStore";
 
 export default function CalendarView() {
+  const { token } = useAuthStore();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>();
@@ -34,9 +36,12 @@ export default function CalendarView() {
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch(`${API_URL}/appointments`);
+      const response = await fetch(`${API_URL}/appointments`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
       if (!response.ok) throw new Error("Error al cargar citas");
       const data = await response.json();
+      console.log(data);
       setAppointments(data);
     } catch (error) {
       toast({
@@ -112,26 +117,26 @@ export default function CalendarView() {
                 {appointments.map((appointment) => (
                   <TableRow key={appointment.id}>
                     <TableCell className="font-medium">
-                      {appointment.clientName || `Cliente #${appointment.clientId}`}
+                      {appointment?.clientName || `Cliente #${appointment?.clientId}`}
                     </TableCell>
                     <TableCell>{appointment.title}</TableCell>
                     <TableCell className="max-w-xs truncate">
                       {appointment.description || "-"}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(appointment.appointmentDate), "PPp", {
+                      {format(new Date(appointment.date), "PPp", {
                         locale: es,
                       })}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          isPastAppointment(appointment.appointmentDate)
+                          isPastAppointment(appointment.date)
                             ? "secondary"
                             : "default"
                         }
                       >
-                        {isPastAppointment(appointment.appointmentDate)
+                        {isPastAppointment(appointment.date)
                           ? "Pasada"
                           : "Pendiente"}
                       </Badge>

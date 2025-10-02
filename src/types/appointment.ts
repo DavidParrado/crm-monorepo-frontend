@@ -4,20 +4,23 @@ export interface Appointment {
   clientName?: string;
   title: string;
   description?: string;
-  appointmentDate: string;
+  date: string;
+  time: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateAppointmentData {
-  clientId: number;
+  clientId?: number;
   title: string;
   description?: string;
-  appointmentDate: string;
+  date: string;
+  time: string;
 }
 
 export interface UpdateAppointmentData {
   title?: string;
   description?: string;
-  appointmentDate?: string;
+  date?: string;
+  time?: string;
 }
