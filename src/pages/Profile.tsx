@@ -37,8 +37,8 @@ export default function Profile() {
           <div className="flex items-start gap-3">
             <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div className="flex-1">
-              <p className="text-sm font-medium text-muted-foreground">Email</p>
-              <p className="text-base">{user.email}</p>
+              <p className="text-sm font-medium text-muted-foreground">Usuario</p>
+              <p className="text-base">{user.username}</p>
             </div>
           </div>
 

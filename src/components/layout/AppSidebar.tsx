@@ -130,7 +130,7 @@ export function AppSidebar() {
                 {capitalize(user?.firstName + ' ' + user?.lastName)}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
-                {user?.email}
+                {user?.username}
               </p>
             </div>
           </div>
