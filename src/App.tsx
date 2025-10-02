@@ -10,7 +10,6 @@ import Calendar from "./pages/Calendar";
 import ClientDetail from "./pages/ClientDetail";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
-import Imports from "./pages/Imports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,7 +28,6 @@ const App = () => (
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/imports" element={<Imports />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
