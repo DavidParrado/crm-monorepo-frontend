@@ -47,10 +47,10 @@ export const ImportsHistory = () => {
 
   const getStatusBadge = (status: Import['status']) => {
     const variants: Record<Import['status'], { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
-      pending: { variant: "secondary", label: "Pendiente" },
-      processing: { variant: "default", label: "Procesando" },
-      completed: { variant: "outline", label: "Completado" },
-      failed: { variant: "destructive", label: "Fallido" }
+      Processing: { variant: "default", label: "Procesando" },
+      Completed: { variant: "outline", label: "Completado" },
+      'Completed with errors': { variant: "secondary", label: "Completado con errores" },
+      Failed: { variant: "destructive", label: "Fallido" }
     };
 
     const config = variants[status];

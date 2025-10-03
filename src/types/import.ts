@@ -13,7 +13,7 @@ export interface Import {
   totalRows: number;
   successfulRows: number;
   failedRows: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'Processing' | 'Completed' | 'Completed with errors' | 'Failed';
   createdAt: Date;
   completedAt?: Date;
   userId: number;
