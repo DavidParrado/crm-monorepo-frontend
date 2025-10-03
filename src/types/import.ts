@@ -10,15 +10,16 @@ export interface ImportMapping {
 export interface Import {
   id: number;
   fileName: string;
-  totalRows: number;
-  successfulRows: number;
-  failedRows: number;
+  totalRows?: number;
+  successfulRecords: number;
+  failedRecords: number;
   status: 'Processing' | 'Completed' | 'Completed with errors' | 'Failed';
-  createdAt: Date;
-  completedAt?: Date;
+  importedAt: string;
   userId: number;
   user?: {
     id: number;
+    firstName: string;
+    lastName: string;
     username: string;
   };
 }

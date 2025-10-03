@@ -105,15 +105,15 @@ export const ImportsHistory = () => {
                 <TableCell className="font-medium">{importItem.fileName}</TableCell>
                 <TableCell>{importItem.user?.username || '-'}</TableCell>
                 <TableCell>{getStatusBadge(importItem.status)}</TableCell>
-                <TableCell className="text-right">{importItem.totalRows}</TableCell>
+                <TableCell className="text-right">{importItem.totalRows || (importItem.successfulRecords + importItem.failedRecords)}</TableCell>
                 <TableCell className="text-right text-green-600 dark:text-green-400">
-                  {importItem.successfulRows}
+                  {importItem.successfulRecords}
                 </TableCell>
                 <TableCell className="text-right text-red-600 dark:text-red-400">
-                  {importItem.failedRows}
+                  {importItem.failedRecords}
                 </TableCell>
                 <TableCell>
-                  {format(new Date(importItem.createdAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                  {format(new Date(importItem.importedAt), "dd/MM/yyyy HH:mm", { locale: es })}
                 </TableCell>
               </TableRow>
             ))}
