@@ -11,6 +11,7 @@ import ClientDetail from "./pages/ClientDetail";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import Imports from "./pages/Imports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/imports" element={<Imports />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
