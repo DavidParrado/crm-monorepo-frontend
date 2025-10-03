@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
-import { Client } from "@/types/client";
+import { User } from "@/types/user";
 import { format } from "date-fns";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
@@ -39,9 +39,9 @@ export default function AppointmentModal({
   onSuccess,
 }: AppointmentModalProps) {
   const { token } = useAuthStore();
-  const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
-    clientId: "",
+    userId: "",
     title: "",
     description: "",
     date: "",
@@ -52,10 +52,10 @@ export default function AppointmentModal({
 
   useEffect(() => {
     if (open) {
-      fetchClients();
+      fetchUsers();
       if (appointment) {
         setFormData({
-          clientId: appointment.clientId?.toString(),
+          userId: appointment.userId?.toString(),
           title: appointment.title,
           description: appointment.description || "",
           date: format(new Date(appointment.date), "yyyy-MM-dd"),
@@ -63,7 +63,7 @@ export default function AppointmentModal({
         });
       } else {
         setFormData({
-          clientId: "",
+          userId: "",
           title: "",
           description: "",
           date: "",
@@ -73,25 +73,25 @@ export default function AppointmentModal({
     }
   }, [open, appointment]);
 
-  const fetchClients = async () => {
+  const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL}/clients?limit=${1000}`, {
+      const response = await fetch(`${API_URL}/users?limit=1000`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error("Error al cargar clientes");
+      if (!response.ok) throw new Error("Error al cargar usuarios");
       const data = await response.json();
-      setClients(data.data);
+      setUsers(data.data);
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los clientes",
+        description: "No se pudieron cargar los usuarios",
         variant: "destructive",
       });
     }
   };
 
   const handleSubmit = async () => {
-    if (!formData.clientId || !formData.title || !formData.date || !formData.time) {
+    if (!formData.userId || !formData.title || !formData.date || !formData.time) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos requeridos",
@@ -117,7 +117,7 @@ export default function AppointmentModal({
           time: formData.time,
         }
         : {
-          // clientId: parseInt(formData.clientId),
+          userId: parseInt(formData.userId),
           title: formData.title,
           description: formData.description || undefined,
           date: formData.date,
@@ -166,21 +166,21 @@ export default function AppointmentModal({
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="client">Cliente *</Label>
+            <Label htmlFor="user">Usuario *</Label>
             <Select
-              value={formData.clientId}
+              value={formData.userId}
               onValueChange={(value) =>
-                setFormData({ ...formData, clientId: value })
+                setFormData({ ...formData, userId: value })
               }
               disabled={!!appointment}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecciona un cliente" />
+                <SelectValue placeholder="Selecciona un usuario" />
               </SelectTrigger>
               <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id.toString()}>
-                    {client.firstName} {client.lastName || ''}
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id.toString()}>
+                    {user.firstName} {user.lastName}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -105,7 +105,7 @@ export default function CalendarView() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Cliente</TableHead>
+                  <TableHead>Usuario</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead>Fecha y Hora</TableHead>
@@ -117,7 +117,7 @@ export default function CalendarView() {
                 {appointments.map((appointment) => (
                   <TableRow key={appointment.id}>
                     <TableCell className="font-medium">
-                      {appointment?.clientName || `Cliente #${appointment?.clientId}`}
+                      {appointment?.userName || `Usuario #${appointment?.userId}`}
                     </TableCell>
                     <TableCell>{appointment.title}</TableCell>
                     <TableCell className="max-w-xs truncate">

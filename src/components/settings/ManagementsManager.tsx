@@ -31,22 +31,32 @@ import {
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Management } from "@/types/management";
+import { Group } from "@/types/group";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ManagementsManager() {
   const { token } = useAuthStore();
   const [managements, setManagements] = useState<Management[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedManagement, setSelectedManagement] = useState<Management | null>(null);
-  const [formData, setFormData] = useState({ name: "" });
+  const [formData, setFormData] = useState({ name: "", groupId: "" });
   const { toast } = useToast();
 
   useEffect(() => {
     fetchManagements();
+    fetchGroups();
   }, []);
 
   const fetchManagements = async () => {
@@ -70,6 +80,25 @@ export default function ManagementsManager() {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch(`${API_URL}/groups`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+      if (!response.ok) throw new Error("Error al cargar grupos");
+      const data = await response.json();
+      setGroups(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los grupos",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleCreate = async () => {
     if (!formData.name.trim()) {
       toast({
@@ -84,7 +113,10 @@ export default function ManagementsManager() {
       const response = await fetch(`${API_URL}/managements`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          groupId: formData.groupId ? parseInt(formData.groupId) : null
+        }),
       });
 
       if (!response.ok) throw new Error("Error al crear gestión");
@@ -95,7 +127,7 @@ export default function ManagementsManager() {
       });
 
       setIsCreateOpen(false);
-      setFormData({ name: "" });
+      setFormData({ name: "", groupId: "" });
       fetchManagements();
     } catch (error) {
       toast({
@@ -113,7 +145,10 @@ export default function ManagementsManager() {
       const response = await fetch(`${API_URL}/managements/${selectedManagement.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          groupId: formData.groupId ? parseInt(formData.groupId) : null
+        }),
       });
 
       if (!response.ok) throw new Error("Error al actualizar gestión");
@@ -125,7 +160,7 @@ export default function ManagementsManager() {
 
       setIsEditOpen(false);
       setSelectedManagement(null);
-      setFormData({ name: "" });
+      setFormData({ name: "", groupId: "" });
       fetchManagements();
     } catch (error) {
       toast({
@@ -166,7 +201,10 @@ export default function ManagementsManager() {
 
   const openEditDialog = (management: Management) => {
     setSelectedManagement(management);
-    setFormData({ name: management.name });
+    setFormData({ 
+      name: management.name,
+      groupId: management.groupId?.toString() || ""
+    });
     setIsEditOpen(true);
   };
 
@@ -193,6 +231,7 @@ export default function ManagementsManager() {
           <TableRow>
             <TableHead>ID</TableHead>
             <TableHead>Nombre</TableHead>
+            <TableHead>Grupo</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -201,6 +240,7 @@ export default function ManagementsManager() {
             <TableRow key={management.id}>
               <TableCell>{management.id}</TableCell>
               <TableCell>{management.name}</TableCell>
+              <TableCell>{management.group?.name || 'Todos los grupos'}</TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
                   variant="ghost"
@@ -237,9 +277,28 @@ export default function ManagementsManager() {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ name: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nombre de la gestión"
               />
+            </div>
+            <div>
+              <Label htmlFor="group">Grupo (Opcional)</Label>
+              <Select
+                value={formData.groupId}
+                onValueChange={(value) => setFormData({ ...formData, groupId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los grupos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los grupos</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -266,9 +325,28 @@ export default function ManagementsManager() {
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ name: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nombre de la gestión"
               />
+            </div>
+            <div>
+              <Label htmlFor="edit-group">Grupo (Opcional)</Label>
+              <Select
+                value={formData.groupId}
+                onValueChange={(value) => setFormData({ ...formData, groupId: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos los grupos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los grupos</SelectItem>
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

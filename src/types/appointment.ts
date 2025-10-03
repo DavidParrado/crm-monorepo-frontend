@@ -1,7 +1,7 @@
 export interface Appointment {
   id: number;
-  clientId: number;
-  clientName?: string;
+  userId: number;
+  userName?: string;
   title: string;
   description?: string;
   date: string;
@@ -11,7 +11,7 @@ export interface Appointment {
 }
 
 export interface CreateAppointmentData {
-  clientId?: number;
+  userId: number;
   title: string;
   description?: string;
   date: string;
