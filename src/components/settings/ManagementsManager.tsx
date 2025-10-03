@@ -51,7 +51,7 @@ export default function ManagementsManager() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedManagement, setSelectedManagement] = useState<Management | null>(null);
-  const [formData, setFormData] = useState({ name: "", groupId: "" });
+  const [formData, setFormData] = useState({ name: "", groupId: "none" });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export default function ManagementsManager() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           name: formData.name,
-          groupId: formData.groupId ? parseInt(formData.groupId) : null
+          groupId: formData.groupId && formData.groupId !== "none" ? parseInt(formData.groupId) : null
         }),
       });
 
@@ -127,7 +127,7 @@ export default function ManagementsManager() {
       });
 
       setIsCreateOpen(false);
-      setFormData({ name: "", groupId: "" });
+      setFormData({ name: "", groupId: "none" });
       fetchManagements();
     } catch (error) {
       toast({
@@ -147,7 +147,7 @@ export default function ManagementsManager() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           name: formData.name,
-          groupId: formData.groupId ? parseInt(formData.groupId) : null
+          groupId: formData.groupId && formData.groupId !== "none" ? parseInt(formData.groupId) : null
         }),
       });
 
@@ -160,7 +160,7 @@ export default function ManagementsManager() {
 
       setIsEditOpen(false);
       setSelectedManagement(null);
-      setFormData({ name: "", groupId: "" });
+      setFormData({ name: "", groupId: "none" });
       fetchManagements();
     } catch (error) {
       toast({
@@ -203,7 +203,7 @@ export default function ManagementsManager() {
     setSelectedManagement(management);
     setFormData({ 
       name: management.name,
-      groupId: management.groupId?.toString() || ""
+      groupId: management.groupId?.toString() || "none"
     });
     setIsEditOpen(true);
   };
@@ -291,7 +291,7 @@ export default function ManagementsManager() {
                   <SelectValue placeholder="Todos los grupos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los grupos</SelectItem>
+                  <SelectItem value="none">Todos los grupos</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id.toString()}>
                       {group.name}
@@ -339,7 +339,7 @@ export default function ManagementsManager() {
                   <SelectValue placeholder="Todos los grupos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los grupos</SelectItem>
+                  <SelectItem value="none">Todos los grupos</SelectItem>
                   {groups.map((group) => (
                     <SelectItem key={group.id} value={group.id.toString()}>
                       {group.name}
