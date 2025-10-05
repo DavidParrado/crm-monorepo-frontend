@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info, AlertCircle } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
 import { Import } from "@/types/import";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const ImportsHistory = () => {
   const [imports, setImports] = useState<Import[]>([]);
@@ -97,6 +100,7 @@ export const ImportsHistory = () => {
               <TableHead className="text-right">Exitosos</TableHead>
               <TableHead className="text-right">Fallidos</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="text-center">Detalles</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,6 +118,66 @@ export const ImportsHistory = () => {
                 </TableCell>
                 <TableCell>
                   {format(new Date(importItem.importedAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                </TableCell>
+                <TableCell className="text-center">
+                  {(importItem.failedRecords > 0 || importItem.errors) && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle>Detalles de Importación</DialogTitle>
+                          <DialogDescription>
+                            {importItem.fileName} - {format(new Date(importItem.importedAt), "dd/MM/yyyy HH:mm", { locale: es })}
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">Total de registros</p>
+                              <p className="text-2xl font-bold">{importItem.totalRows || (importItem.successfulRecords + importItem.failedRecords)}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">Exitosos</p>
+                              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{importItem.successfulRecords}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground">Fallidos</p>
+                              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{importItem.failedRecords}</p>
+                            </div>
+                          </div>
+                          
+                          {importItem.errors && importItem.errors.length > 0 && (
+                            <div className="space-y-3">
+                              <h4 className="font-semibold flex items-center gap-2">
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                                Errores Encontrados
+                              </h4>
+                              <div className="space-y-2">
+                                {importItem.errors.map((error, index) => (
+                                  <Alert key={index} variant="destructive">
+                                    <AlertDescription>
+                                      <div className="space-y-1">
+                                        <p className="font-medium">Fila {error.row} - Campo: {error.field}</p>
+                                        <ul className="list-disc list-inside space-y-1 text-sm">
+                                          {error.messages.map((message, msgIndex) => (
+                                            <li key={msgIndex}>{message}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </AlertDescription>
+                                  </Alert>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
