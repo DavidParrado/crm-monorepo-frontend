@@ -7,6 +7,19 @@ export interface ImportMapping {
   [columnIndex: string]: string; // columnIndex -> fieldName or "ignore"
 }
 
+export interface ImportErrorDetail {
+  row: number;
+  field: string;
+  messages: string[];
+}
+
+export interface ImportUploadResponse {
+  message: string;
+  successful: number;
+  failed: number;
+  errors?: ImportErrorDetail[];
+}
+
 export interface Import {
   id: number;
   fileName: string;

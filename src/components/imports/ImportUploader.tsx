@@ -5,8 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, Loader2 } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
-import { ImportPreview } from "@/types/import";
+import { ImportPreview, ImportUploadResponse } from "@/types/import";
 import { ColumnMapper } from "./ColumnMapper";
+import { ImportResultFeedback } from "./ImportResultFeedback";
 
 interface ImportUploaderProps {
   onSuccess?: () => void;
@@ -15,6 +16,7 @@ interface ImportUploaderProps {
 export const ImportUploader = ({ onSuccess }: ImportUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [importResult, setImportResult] = useState<ImportUploadResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
@@ -71,7 +73,27 @@ export const ImportUploader = ({ onSuccess }: ImportUploaderProps) => {
   const handleReset = () => {
     setSelectedFile(null);
     setPreview(null);
+    setImportResult(null);
   };
+
+  const handleImportSuccess = (result: ImportUploadResponse) => {
+    setImportResult(result);
+    setPreview(null);
+    onSuccess?.();
+  };
+
+  const handleCloseFeedback = () => {
+    handleReset();
+  };
+
+  if (importResult) {
+    return (
+      <ImportResultFeedback
+        result={importResult}
+        onClose={handleCloseFeedback}
+      />
+    );
+  }
 
   if (preview && selectedFile) {
     return (
@@ -79,10 +101,7 @@ export const ImportUploader = ({ onSuccess }: ImportUploaderProps) => {
         preview={preview}
         file={selectedFile}
         onCancel={handleReset}
-        onSuccess={() => {
-          handleReset();
-          onSuccess?.();
-        }}
+        onSuccess={handleImportSuccess}
       />
     );
   }

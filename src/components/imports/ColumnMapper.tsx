@@ -6,13 +6,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
-import { ImportPreview, ImportMapping, AVAILABLE_FIELDS } from "@/types/import";
+import { ImportPreview, ImportMapping, AVAILABLE_FIELDS, ImportUploadResponse } from "@/types/import";
 
 interface ColumnMapperProps {
   preview: ImportPreview;
   file: File;
   onCancel: () => void;
-  onSuccess: () => void;
+  onSuccess: (result: ImportUploadResponse) => void;
 }
 
 export const ColumnMapper = ({ preview, file, onCancel, onSuccess }: ColumnMapperProps) => {
@@ -69,12 +69,14 @@ export const ColumnMapper = ({ preview, file, onCancel, onSuccess }: ColumnMappe
         throw new Error('Error al procesar la importación');
       }
 
+      const result: ImportUploadResponse = await response.json();
+
       toast({
-        title: "Importación iniciada",
-        description: "El archivo se está procesando. Puedes ver el progreso en el historial.",
+        title: "Importación completada",
+        description: `${result.successful} registros exitosos, ${result.failed} fallidos`,
       });
 
-      onSuccess();
+      onSuccess(result);
     } catch (error) {
       toast({
         title: "Error",
