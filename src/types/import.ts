@@ -7,12 +7,6 @@ export interface ImportMapping {
   [columnIndex: string]: string; // columnIndex -> fieldName or "ignore"
 }
 
-export interface ImportError {
-  row: number;
-  field: string;
-  messages: string[];
-}
-
 export interface Import {
   id: number;
   fileName: string;
@@ -22,7 +16,6 @@ export interface Import {
   status: 'Processing' | 'Completed' | 'Completed with errors' | 'Failed';
   importedAt: string;
   userId: number;
-  errors?: ImportError[];
   user?: {
     id: number;
     firstName: string;
