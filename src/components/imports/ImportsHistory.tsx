@@ -2,8 +2,19 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
 import { Import } from "@/types/import";
@@ -13,6 +24,9 @@ import { es } from "date-fns/locale";
 export const ImportsHistory = () => {
   const [imports, setImports] = useState<Import[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedImport, setSelectedImport] = useState<Import | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const token = useAuthStore((state) => state.token);
 
@@ -42,6 +56,47 @@ export const ImportsHistory = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (importItem: Import) => {
+    setSelectedImport(importItem);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedImport) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`${API_URL}/imports/${selectedImport.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar la importación');
+      }
+
+      toast({
+        title: "Importación eliminada",
+        description: "Los registros de esta importación han sido eliminados exitosamente",
+      });
+
+      // Refresh the list
+      fetchImports();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la importación",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setSelectedImport(null);
     }
   };
 
@@ -97,6 +152,7 @@ export const ImportsHistory = () => {
               <TableHead className="text-right">Exitosos</TableHead>
               <TableHead className="text-right">Fallidos</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -115,11 +171,50 @@ export const ImportsHistory = () => {
                 <TableCell>
                   {format(new Date(importItem.importedAt), "dd/MM/yyyy HH:mm", { locale: es })}
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteClick(importItem)}
+                    title="Eliminar importación"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </CardContent>
+      
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar importación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará todos los clientes importados en el lote "{selectedImport?.fileName}".
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Eliminando...
+                </>
+              ) : (
+                'Eliminar'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };
