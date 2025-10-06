@@ -54,12 +54,14 @@ export default function AppointmentModal({
     if (open) {
       fetchUsers();
       if (appointment) {
+        // Parse UTC ISO string to local date and time for display
+        const localDate = new Date(appointment.appointmentDate);
         setFormData({
           userId: appointment.userId?.toString(),
           title: appointment.title,
           description: appointment.description || "",
-          date: format(new Date(appointment.date), "yyyy-MM-dd"),
-          time: format(new Date(appointment.date), "HH:mm"),
+          date: format(localDate, "yyyy-MM-dd"),
+          time: format(localDate, "HH:mm"),
         });
       } else {
         setFormData({
@@ -103,6 +105,12 @@ export default function AppointmentModal({
     setLoading(true);
 
     try {
+      // Combine local date and time into a single Date object
+      const localDateTime = new Date(`${formData.date}T${formData.time}`);
+      
+      // Convert to UTC ISO string for the API
+      const appointmentDate = localDateTime.toISOString();
+
       const url = appointment
         ? `${API_URL}/appointments/${appointment.id}`
         : `${API_URL}/appointments`;
@@ -113,15 +121,13 @@ export default function AppointmentModal({
         ? {
           title: formData.title,
           description: formData.description || undefined,
-          date: formData.date,
-          time: formData.time,
+          appointmentDate,
         }
         : {
           userId: parseInt(formData.userId),
           title: formData.title,
           description: formData.description || undefined,
-          date: formData.date,
-          time: formData.time,
+          appointmentDate,
         };
 
       const response = await fetch(url, {

@@ -4,8 +4,7 @@ export interface Appointment {
   userName?: string;
   title: string;
   description?: string;
-  date: string;
-  time: string;
+  appointmentDate: string; // ISO 8601 UTC string
   createdAt: string;
   updatedAt: string;
 }
@@ -14,13 +13,11 @@ export interface CreateAppointmentData {
   userId: number;
   title: string;
   description?: string;
-  date: string;
-  time: string;
+  appointmentDate: string; // ISO 8601 UTC string
 }
 
 export interface UpdateAppointmentData {
   title?: string;
   description?: string;
-  date?: string;
-  time?: string;
+  appointmentDate?: string; // ISO 8601 UTC string
 }

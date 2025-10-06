@@ -69,8 +69,8 @@ export default function CalendarView() {
     setIsModalOpen(true);
   };
 
-  const isPastAppointment = (date: string) => {
-    return new Date(date) < new Date();
+  const isPastAppointment = (appointmentDate: string) => {
+    return new Date(appointmentDate) < new Date();
   };
 
   if (loading) {
@@ -124,19 +124,19 @@ export default function CalendarView() {
                       {appointment.description || "-"}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(appointment.date), "PPp", {
+                      {format(new Date(appointment.appointmentDate), "PPp", {
                         locale: es,
                       })}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          isPastAppointment(appointment.date)
+                          isPastAppointment(appointment.appointmentDate)
                             ? "secondary"
                             : "default"
                         }
                       >
-                        {isPastAppointment(appointment.date)
+                        {isPastAppointment(appointment.appointmentDate)
                           ? "Pasada"
                           : "Pendiente"}
                       </Badge>
