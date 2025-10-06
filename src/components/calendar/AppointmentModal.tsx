@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
 import { User } from "@/types/user";
+import { RoleEnum } from "@/types/role";
 import { format } from "date-fns";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
@@ -50,7 +51,7 @@ export default function AppointmentModal({
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
-  const isAdmin = user?.role?.name === 'admin';
+  const isAdmin = user?.role?.name === RoleEnum.Admin;
 
   useEffect(() => {
     if (open) {
