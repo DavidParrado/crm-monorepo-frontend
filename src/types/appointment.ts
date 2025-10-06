@@ -10,13 +10,14 @@ export interface Appointment {
 }
 
 export interface CreateAppointmentData {
-  userId: number;
+  userId?: number;
   title: string;
   description?: string;
   appointmentDate: string; // ISO 8601 UTC string
 }
 
 export interface UpdateAppointmentData {
+  userId?: number;
   title?: string;
   description?: string;
   appointmentDate?: string; // ISO 8601 UTC string

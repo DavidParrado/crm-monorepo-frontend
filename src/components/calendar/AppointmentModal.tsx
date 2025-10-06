@@ -38,7 +38,7 @@ export default function AppointmentModal({
   appointment,
   onSuccess,
 }: AppointmentModalProps) {
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [users, setUsers] = useState<User[]>([]);
   const [formData, setFormData] = useState({
     userId: "",
@@ -49,10 +49,14 @@ export default function AppointmentModal({
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  const isAdmin = user?.role?.name === 'admin';
 
   useEffect(() => {
     if (open) {
-      fetchUsers();
+      if (isAdmin) {
+        fetchUsers();
+      }
       if (appointment) {
         // Parse UTC ISO string to local date and time for display
         const localDate = new Date(appointment.appointmentDate);
@@ -73,7 +77,7 @@ export default function AppointmentModal({
         });
       }
     }
-  }, [open, appointment]);
+  }, [open, appointment, isAdmin]);
 
   const fetchUsers = async () => {
     try {
@@ -93,10 +97,20 @@ export default function AppointmentModal({
   };
 
   const handleSubmit = async () => {
-    if (!formData.userId || !formData.title || !formData.date || !formData.time) {
+    if (!formData.title || !formData.date || !formData.time) {
       toast({
         title: "Error",
         description: "Por favor completa todos los campos requeridos",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Solo validar userId si es admin
+    if (isAdmin && !appointment && !formData.userId) {
+      toast({
+        title: "Error",
+        description: "Por favor selecciona un usuario",
         variant: "destructive",
       });
       return;
@@ -119,12 +133,13 @@ export default function AppointmentModal({
 
       const body: CreateAppointmentData | UpdateAppointmentData = appointment
         ? {
+          ...(isAdmin && formData.userId ? { userId: parseInt(formData.userId) } : {}),
           title: formData.title,
           description: formData.description || undefined,
           appointmentDate,
         }
         : {
-          userId: parseInt(formData.userId),
+          ...(isAdmin && formData.userId ? { userId: parseInt(formData.userId) } : {}),
           title: formData.title,
           description: formData.description || undefined,
           appointmentDate,
@@ -171,27 +186,28 @@ export default function AppointmentModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="user">Usuario *</Label>
-            <Select
-              value={formData.userId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, userId: value })
-              }
-              disabled={!!appointment}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona un usuario" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map((user) => (
-                  <SelectItem key={user.id} value={user.id.toString()}>
-                    {user.firstName} {user.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isAdmin && (
+            <div>
+              <Label htmlFor="user">Usuario {!appointment && '*'}</Label>
+              <Select
+                value={formData.userId}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, userId: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.firstName} {user.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div>
             <Label htmlFor="title">Título *</Label>
