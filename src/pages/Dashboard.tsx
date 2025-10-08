@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Eye, Filter } from "lucide-react";
+import { Users, Eye, Filter, Trash2 } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { RoleEnum } from "@/types/role";
@@ -39,6 +39,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 
 interface FilterOptions {
   countries?: string[];
@@ -76,6 +95,13 @@ export default function Dashboard() {
   const [sortBy] = useState("createdAt");
   const [sortOrder] = useState<"ASC" | "DESC">("DESC");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Action states
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteClientId, setDeleteClientId] = useState<number | null>(null);
+  const [selectedAssigneeId, setSelectedAssigneeId] = useState<string>("");
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const debouncedSearch = useDebounce(searchQuery, 500);
   
@@ -199,6 +225,208 @@ export default function Dashboard() {
   const userRole = user?.role?.name as RoleEnum;
   const canFilterByUser = userRole === RoleEnum.Admin || userRole === RoleEnum.TeamLeader;
   const canFilterByGroup = userRole === RoleEnum.Admin;
+  const isAdmin = userRole === RoleEnum.Admin;
+
+  // Action handlers
+  const handleBulkAssign = async () => {
+    if (!selectedAssigneeId || selectedRows.length === 0) {
+      toast.error("Selecciona un usuario para asignar");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_URL}/clients/assign-bulk`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          clientIds: selectedRows,
+          assigneeUserId: parseInt(selectedAssigneeId),
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al asignar clientes");
+      }
+
+      const result = await response.json();
+      toast.success(result.message);
+      setShowAssignDialog(false);
+      setSelectedAssigneeId("");
+      
+      // Refresh data
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sortBy,
+        sortOrder,
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
+      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
+      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
+      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
+      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+
+      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: ClientsResponse = await refreshResponse.json();
+      setClients(data.data);
+      setTotal(data.total);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error assigning clients:", error);
+      toast.error(error instanceof Error ? error.message : "Error al asignar clientes");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleBulkUnassign = async () => {
+    if (selectedRows.length === 0) return;
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_URL}/clients/unassign-bulk`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ clientIds: selectedRows }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al desasignar clientes");
+      }
+
+      const result = await response.json();
+      toast.success(result.message);
+      
+      // Refresh data
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sortBy,
+        sortOrder,
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
+      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
+      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
+      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
+      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+
+      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: ClientsResponse = await refreshResponse.json();
+      setClients(data.data);
+      setTotal(data.total);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error unassigning clients:", error);
+      toast.error(error instanceof Error ? error.message : "Error al desasignar clientes");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (selectedRows.length === 0) return;
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_URL}/clients/export`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ clientIds: selectedRows }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al exportar clientes");
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "clientes.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success("Clientes exportados exitosamente");
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error exporting clients:", error);
+      toast.error(error instanceof Error ? error.message : "Error al exportar clientes");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDeleteClient = async () => {
+    if (!deleteClientId) return;
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_URL}/clients/${deleteClientId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al eliminar cliente");
+      }
+
+      toast.success("Cliente eliminado exitosamente");
+      setShowDeleteDialog(false);
+      setDeleteClientId(null);
+      
+      // Refresh data
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sortBy,
+        sortOrder,
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
+      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
+      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
+      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
+      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+
+      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: ClientsResponse = await refreshResponse.json();
+      setClients(data.data);
+      setTotal(data.total);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      toast.error(error instanceof Error ? error.message : "Error al eliminar cliente");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -363,23 +591,35 @@ export default function Dashboard() {
         </CardHeader>
         <CardContent>
           {/* Acciones masivas */}
-          {selectedRows.length > 0 && (
+          {isAdmin && selectedRows.length > 0 && (
             <div className="mb-4 flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
               <span className="text-sm font-medium">
                 {selectedRows.length} seleccionado{selectedRows.length > 1 ? "s" : ""}
               </span>
               <div className="flex gap-2 ml-auto">
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => setShowAssignDialog(true)}
+                  disabled={isProcessing}
+                >
                   Asignar
                 </Button>
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleBulkUnassign}
+                  disabled={isProcessing}
+                >
                   Desasignar
                 </Button>
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleExport}
+                  disabled={isProcessing}
+                >
                   Exportar
-                </Button>
-                <Button size="sm" variant="destructive">
-                  Eliminar
                 </Button>
               </div>
             </div>
@@ -402,7 +642,7 @@ export default function Dashboard() {
                   <TableHead>País</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Asignado a</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead className="text-right w-[200px]">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -466,14 +706,28 @@ export default function Dashboard() {
                           : "Sin asignar"}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/clients/${client.id}`)}
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          Ver detalle
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/clients/${client.id}`)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Ver detalle
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setDeleteClientId(client.id);
+                                setShowDeleteDialog(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -552,6 +806,82 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Assign Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Asignar Clientes</DialogTitle>
+            <DialogDescription>
+              Selecciona un usuario para asignar {selectedRows.length} cliente
+              {selectedRows.length > 1 ? "s" : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="assignee">Usuario</Label>
+              <Select value={selectedAssigneeId} onValueChange={setSelectedAssigneeId}>
+                <SelectTrigger id="assignee">
+                  <SelectValue placeholder="Selecciona un usuario" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filterOptions.assignedUsers?.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAssignDialog(false);
+                setSelectedAssigneeId("");
+              }}
+              disabled={isProcessing}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleBulkAssign} disabled={isProcessing || !selectedAssigneeId}>
+              {isProcessing ? "Asignando..." : "Asignar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el cliente
+              de la base de datos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setDeleteClientId(null);
+              }}
+              disabled={isProcessing}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteClient}
+              disabled={isProcessing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isProcessing ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
