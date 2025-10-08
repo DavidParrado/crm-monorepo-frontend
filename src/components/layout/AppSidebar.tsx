@@ -29,9 +29,9 @@ import { capitalize } from "@/lib/utils";
 import { RoleEnum } from "@/types/role";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
-  { title: "Calendario", url: "/calendar", icon: Calendar, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
-  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [RoleEnum.Admin, RoleEnum.TeamLeaderFTD, RoleEnum.TeamLeaderRete, RoleEnum.AgenteFTD, RoleEnum.AgenteRete, RoleEnum.Auditor] },
+  { title: "Calendario", url: "/calendar", icon: Calendar, roles: [RoleEnum.Admin, RoleEnum.TeamLeaderFTD, RoleEnum.TeamLeaderRete, RoleEnum.AgenteFTD, RoleEnum.AgenteRete, RoleEnum.Auditor] },
+  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: [RoleEnum.Admin, RoleEnum.TeamLeaderFTD, RoleEnum.TeamLeaderRete, RoleEnum.AgenteFTD, RoleEnum.AgenteRete, RoleEnum.Auditor] },
 ];
 
 const adminItems = [

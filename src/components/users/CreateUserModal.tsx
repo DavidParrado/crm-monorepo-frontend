@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Dialog,
   DialogContent,
@@ -74,32 +75,54 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   const selectedRoleId = form.watch("roleId");
   const selectedGroupId = form.watch("groupId");
+  const debouncedTeamLeaderSearch = useDebounce(teamLeaderSearch, 500);
 
-  // Determine if extension and group are required based on role
+  // Determine if role requires group and extension
   const isRoleRequiringGroupAndExt = useMemo(() => {
     const role = roles.find(r => r.id.toString() === selectedRoleId);
     if (!role) return false;
     return [
-      RoleEnum.TeamLeader,
-      RoleEnum.Agent
+      RoleEnum.TeamLeaderFTD,
+      RoleEnum.TeamLeaderRete,
+      RoleEnum.AgenteFTD,
+      RoleEnum.AgenteRete
     ].includes(role.name as RoleEnum);
   }, [selectedRoleId, roles]);
 
-  // Fetch team leaders when group changes
+  // Determine if role should hide group and teamLeader fields
+  const shouldHideGroupFields = useMemo(() => {
+    const role = roles.find(r => r.id.toString() === selectedRoleId);
+    if (!role) return false;
+    return [RoleEnum.Admin, RoleEnum.Auditor].includes(role.name as RoleEnum);
+  }, [selectedRoleId, roles]);
+
+  // Clear group and teamLeader when role changes to Admin/Auditor
   useEffect(() => {
-    if (selectedGroupId) {
+    if (shouldHideGroupFields) {
+      form.setValue("groupId", "");
+      form.setValue("teamLeaderId", "");
+      form.setValue("ext", "");
+    }
+  }, [shouldHideGroupFields]);
+
+  // Fetch team leaders when group changes or search is debounced
+  useEffect(() => {
+    if (selectedGroupId && !shouldHideGroupFields) {
       fetchTeamLeaders();
     } else {
       setTeamLeaders([]);
-      form.setValue("teamLeaderId", "");
+      if (!shouldHideGroupFields) {
+        form.setValue("teamLeaderId", "");
+      }
     }
-  }, [selectedGroupId, teamLeaderSearch]);
+  }, [selectedGroupId, debouncedTeamLeaderSearch]);
 
   useEffect(() => {
     if (open) {
-      fetchRoles();
-      fetchGroups();
+      // Fetch roles and groups in parallel for faster loading
+      Promise.all([fetchRoles(), fetchGroups()]);
       form.reset();
+      setTeamLeaderSearch("");
     }
   }, [open]);
 
@@ -135,15 +158,16 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
     }
   };
 
-  const fetchTeamLeaders = async () => {
+  const fetchTeamLeaders = useCallback(async () => {
     try {
       const params = new URLSearchParams();
-      params.append("roleName", RoleEnum.TeamLeader);
+      // Search for both TeamLeader roles
+      params.append("roleName", RoleEnum.TeamLeaderFTD);
       if (selectedGroupId) {
         params.append("groupId", selectedGroupId);
       }
-      if (teamLeaderSearch) {
-        params.append("search", teamLeaderSearch);
+      if (debouncedTeamLeaderSearch) {
+        params.append("search", debouncedTeamLeaderSearch);
       }
 
       const response = await fetch(`${API_URL}/users?${params}`, {
@@ -159,7 +183,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
         variant: "destructive",
       });
     }
-  };
+  }, [selectedGroupId, debouncedTeamLeaderSearch, token]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // Validate required fields based on role
@@ -314,95 +338,99 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="groupId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Grupo {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
-                  </FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un grupo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id.toString()}>
-                          {group.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!shouldHideGroupFields && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="groupId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Grupo {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un grupo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {groups.map((group) => (
+                            <SelectItem key={group.id} value={group.id.toString()}>
+                              {group.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="teamLeaderId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team Leader (Opcional)</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={!selectedGroupId}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={
-                          !selectedGroupId
-                            ? "Primero selecciona un grupo"
-                            : "Selecciona un team leader"
-                        } />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <div className="p-2">
-                        <Input
-                          placeholder="Buscar team leader..."
-                          value={teamLeaderSearch}
-                          onChange={(e) => setTeamLeaderSearch(e.target.value)}
-                          className="mb-2"
-                        />
-                      </div>
-                      {teamLeaders.length === 0 ? (
-                        <div className="p-2 text-sm text-muted-foreground text-center">
-                          No hay team leaders disponibles
-                        </div>
-                      ) : (
-                        teamLeaders.map((leader) => (
-                          <SelectItem key={leader.id} value={leader.id.toString()}>
-                            {leader.firstName} {leader.lastName} ({leader.username})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="teamLeaderId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Team Leader (Opcional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={!selectedGroupId}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={
+                              !selectedGroupId
+                                ? "Primero selecciona un grupo"
+                                : "Selecciona un team leader"
+                            } />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <div className="p-2">
+                            <Input
+                              placeholder="Buscar team leader..."
+                              value={teamLeaderSearch}
+                              onChange={(e) => setTeamLeaderSearch(e.target.value)}
+                              className="mb-2"
+                            />
+                          </div>
+                          {teamLeaders.length === 0 ? (
+                            <div className="p-2 text-sm text-muted-foreground text-center">
+                              No hay team leaders disponibles
+                            </div>
+                          ) : (
+                            teamLeaders.map((leader) => (
+                              <SelectItem key={leader.id} value={leader.id.toString()}>
+                                {leader.firstName} {leader.lastName} ({leader.username})
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="ext"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="ext"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
 
             <div className="flex justify-end gap-2 pt-4">
               <Button
