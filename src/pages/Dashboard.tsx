@@ -82,7 +82,7 @@ export default function Dashboard() {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
@@ -804,10 +804,32 @@ export default function Dashboard() {
           {/* Paginación */}
           {!isLoading && clients.length > 0 && (
             <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Mostrando {(currentPage - 1) * limit + 1}-
-                {Math.min(currentPage * limit, total)} de {total} resultados
-              </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Filas por página:</span>
+                  <Select
+                    value={limit.toString()}
+                    onValueChange={(value) => {
+                      setLimit(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Mostrando {(currentPage - 1) * limit + 1}-
+                  {Math.min(currentPage * limit, total)} de {total} resultados
+                </p>
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
