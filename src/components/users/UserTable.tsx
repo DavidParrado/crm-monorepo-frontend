@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { User, Role } from "@/types/user";
 import { Group } from "@/types/group";
+import { RoleEnum } from "@/types/role";
 import {
   Table,
   TableBody,
@@ -98,11 +99,15 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
   };
 
   const getRoleBadgeVariant = (roleName: string) => {
-    switch (roleName.toLowerCase()) {
-      case "admin":
+    switch (roleName) {
+      case RoleEnum.Admin:
         return "destructive";
-      case "supervisor":
+      case RoleEnum.TeamLeader:
         return "default";
+      case RoleEnum.Agent:
+        return "secondary";
+      case RoleEnum.Auditor:
+        return "outline";
       default:
         return "secondary";
     }
