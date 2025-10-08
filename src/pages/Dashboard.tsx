@@ -68,11 +68,11 @@ export default function Dashboard() {
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
   // Filters
-  const [selectedCountry, setSelectedCountry] = useState<string>("");
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
-  const [selectedUser, setSelectedUser] = useState<string>("");
-  const [selectedGroup, setSelectedGroup] = useState<string>("");
+  const [selectedCountry, setSelectedCountry] = useState<string>("all");
+  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<string>("all");
+  const [selectedGroup, setSelectedGroup] = useState<string>("all");
   const [sortBy] = useState("createdAt");
   const [sortOrder] = useState<"ASC" | "DESC">("DESC");
   const [showFilters, setShowFilters] = useState(false);
@@ -119,11 +119,11 @@ export default function Dashboard() {
         });
 
         if (debouncedSearch) params.append("search", debouncedSearch);
-        if (selectedCountry) params.append("country", selectedCountry);
-        if (selectedCampaign) params.append("campaign", selectedCampaign);
-        if (selectedStatus) params.append("statusId", selectedStatus);
-        if (selectedUser) params.append("assignedUserId", selectedUser);
-        if (selectedGroup) params.append("groupId", selectedGroup);
+        if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
+        if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
+        if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
+        if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
+        if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
 
         const response = await fetch(`${API_URL}/clients?${params}`, {
           headers: {
@@ -181,15 +181,20 @@ export default function Dashboard() {
   };
 
   const clearFilters = () => {
-    setSelectedCountry("");
-    setSelectedCampaign("");
-    setSelectedStatus("");
-    setSelectedUser("");
-    setSelectedGroup("");
+    setSelectedCountry("all");
+    setSelectedCampaign("all");
+    setSelectedStatus("all");
+    setSelectedUser("all");
+    setSelectedGroup("all");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = selectedCountry || selectedCampaign || selectedStatus || selectedUser || selectedGroup;
+  const hasActiveFilters = 
+    (selectedCountry && selectedCountry !== "all") || 
+    (selectedCampaign && selectedCampaign !== "all") || 
+    (selectedStatus && selectedStatus !== "all") || 
+    (selectedUser && selectedUser !== "all") || 
+    (selectedGroup && selectedGroup !== "all");
 
   const userRole = user?.role?.name as RoleEnum;
   const canFilterByUser = userRole === RoleEnum.Admin || userRole === RoleEnum.TeamLeader;
@@ -228,7 +233,13 @@ export default function Dashboard() {
                 Filtros
                 {hasActiveFilters && (
                   <Badge variant="secondary" className="ml-2">
-                    {[selectedCountry, selectedCampaign, selectedStatus, selectedUser, selectedGroup].filter(Boolean).length}
+                    {[
+                      selectedCountry !== "all" && selectedCountry,
+                      selectedCampaign !== "all" && selectedCampaign,
+                      selectedStatus !== "all" && selectedStatus,
+                      selectedUser !== "all" && selectedUser,
+                      selectedGroup !== "all" && selectedGroup
+                    ].filter(Boolean).length}
                   </Badge>
                 )}
               </Button>
@@ -248,7 +259,7 @@ export default function Dashboard() {
                         <SelectValue placeholder="Todos los países" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {filterOptions.countries.map((country) => (
                           <SelectItem key={country} value={country}>
                             {country}
@@ -268,7 +279,7 @@ export default function Dashboard() {
                         <SelectValue placeholder="Todas las campañas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas</SelectItem>
+                        <SelectItem value="all">Todas</SelectItem>
                         {filterOptions.campaigns.map((campaign) => (
                           <SelectItem key={campaign} value={campaign}>
                             {campaign}
@@ -288,7 +299,7 @@ export default function Dashboard() {
                         <SelectValue placeholder="Todos los estados" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {filterOptions.statuses.map((status) => (
                           <SelectItem key={status.id} value={status.id.toString()}>
                             {status.name}
@@ -308,7 +319,7 @@ export default function Dashboard() {
                         <SelectValue placeholder="Todos los usuarios" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {filterOptions.assignedUsers.map((user) => (
                           <SelectItem key={user.id} value={user.id.toString()}>
                             {user.name}
@@ -328,7 +339,7 @@ export default function Dashboard() {
                         <SelectValue placeholder="Todos los grupos" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos</SelectItem>
+                        <SelectItem value="all">Todos</SelectItem>
                         {filterOptions.groups.map((group) => (
                           <SelectItem key={group.id} value={group.id.toString()}>
                             {group.name}
