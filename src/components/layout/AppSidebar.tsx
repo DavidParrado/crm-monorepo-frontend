@@ -26,17 +26,18 @@ import { useAuthStore } from "@/store/authStore";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { capitalize } from "@/lib/utils";
+import { RoleEnum } from "@/types/role";
 
 const mainItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
-  { title: "Calendario", url: "/calendar", icon: Calendar, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
-  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: ['admin', 'teamleaderftd', 'agenteftd', 'agenterete'] },
+  { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
+  { title: "Calendario", url: "/calendar", icon: Calendar, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
+  { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
 ];
 
 const adminItems = [
-  { title: "Usuarios", url: "/users", icon: Users, roles: ['admin'] },
-  { title: "Importaciones", url: "/imports", icon: Upload, roles: ['admin'] },
-  { title: "Configuración", url: "/settings", icon: Settings, roles: ['admin'] },
+  { title: "Usuarios", url: "/users", icon: Users, roles: [RoleEnum.Admin] },
+  { title: "Importaciones", url: "/imports", icon: Upload, roles: [RoleEnum.Admin] },
+  { title: "Configuración", url: "/settings", icon: Settings, roles: [RoleEnum.Admin] },
 ];
 
 export function AppSidebar() {
@@ -45,7 +46,10 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   const canAccessRoute = (routeRoles: string[]) => {
-    return user && routeRoles.includes(user.role.name.toLocaleLowerCase());
+    console.log('User Role:', user?.role?.name);
+    console.log('Route Roles:', routeRoles);
+    if (!user || !user.role) return false;
+    return user && routeRoles.includes(user.role.name);
   };
 
   const getInitials = () => {
@@ -94,7 +98,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user?.role.name.toLocaleLowerCase() === 'admin' && (
+        {user?.role.name === RoleEnum.Admin && (
           <SidebarGroup className="px-2">
             <SidebarGroupLabel>
               Administración

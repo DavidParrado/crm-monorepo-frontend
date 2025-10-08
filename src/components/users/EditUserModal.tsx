@@ -79,10 +79,8 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
     const role = roles.find(r => r.id.toString() === selectedRoleId);
     if (!role) return false;
     return [
-      RoleEnum.TeamLeaderFTD,
-      RoleEnum.TeamLeaderRete,
-      RoleEnum.AgenteFTD,
-      RoleEnum.AgenteRete
+      RoleEnum.TeamLeader,
+      RoleEnum.Agent
     ].includes(role.name as RoleEnum);
   }, [selectedRoleId, roles]);
 
@@ -151,8 +149,7 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
   const fetchTeamLeaders = async () => {
     try {
       const params = new URLSearchParams();
-      params.append("roleName", RoleEnum.TeamLeaderFTD);
-      params.append("roleName", RoleEnum.TeamLeaderRete);
+      params.append("roleName", RoleEnum.TeamLeader);
       if (selectedGroupId) {
         params.append("groupId", selectedGroupId);
       }
@@ -346,16 +343,16 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Team Leader (Opcional)</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    onValueChange={field.onChange}
                     value={field.value}
                     disabled={!selectedGroupId}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder={
-                          !selectedGroupId 
-                            ? "Primero selecciona un grupo" 
+                          !selectedGroupId
+                            ? "Primero selecciona un grupo"
                             : "Selecciona un team leader"
                         } />
                       </SelectTrigger>

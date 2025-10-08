@@ -1,13 +1,11 @@
 export interface Role {
-  id:   number;
+  id: number;
   name: string;
 }
 
 export enum RoleEnum {
   Admin = 'Admin',
-  AgenteFTD = 'AgenteFTD',
-  AgenteRete = 'AgenteRete',
-  TeamLeaderFTD = 'TeamLeaderFTD',
-  TeamLeaderRete = 'TeamLeaderRete',
+  Agent = 'Agent',
+  TeamLeader = 'TeamLeader',
   Auditor = 'Auditor',
 }
