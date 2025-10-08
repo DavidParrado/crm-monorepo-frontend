@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { User, Role } from "@/types/user";
 import { Group } from "@/types/group";
 import {
@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit, Key, Search } from "lucide-react";
+import { Edit, Key, Search, Trash2 } from "lucide-react";
 import { EditUserModal } from "./EditUserModal";
 import { ResetPasswordModal } from "./ResetPasswordModal";
+import { DeleteUserDialog } from "./DeleteUserDialog";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { API_URL } from "@/lib/constants";
@@ -35,9 +36,11 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
 
   const limit = 10;
 
@@ -49,8 +52,8 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
         limit: limit.toString(),
       });
 
-      if (search) {
-        params.append("search", search);
+      if (debouncedSearch) {
+        params.append("search", debouncedSearch);
       }
 
       const response = await fetch(`${API_URL}/users?${params}`, {
@@ -76,13 +79,22 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
     }
   };
 
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, search]);
+  }, [currentPage, debouncedSearch]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
-    setCurrentPage(1);
   };
 
   const getRoleBadgeVariant = (roleName: string) => {
@@ -188,6 +200,13 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
                       >
                         <Key className="h-4 w-4" />
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeletingUser(user)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -257,6 +276,18 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
           open={!!resetPasswordUser}
           onOpenChange={(open) => !open && setResetPasswordUser(null)}
           onPasswordReset={() => setResetPasswordUser(null)}
+        />
+      )}
+
+      {deletingUser && (
+        <DeleteUserDialog
+          user={deletingUser}
+          open={!!deletingUser}
+          onOpenChange={(open) => !open && setDeletingUser(null)}
+          onUserDeleted={() => {
+            onUserUpdated();
+            setDeletingUser(null);
+          }}
         />
       )}
     </div>
