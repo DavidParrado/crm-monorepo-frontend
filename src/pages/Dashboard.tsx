@@ -102,6 +102,7 @@ export default function Dashboard() {
   const [deleteClientId, setDeleteClientId] = useState<number | null>(null);
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   
   const debouncedSearch = useDebounce(searchQuery, 500);
   
@@ -428,6 +429,61 @@ export default function Dashboard() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedRows.length === 0) {
+      toast.error("Por favor selecciona al menos un cliente");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_URL}/clients/delete-bulk`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ clientIds: selectedRows }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al eliminar clientes");
+      }
+
+      const result = await response.json();
+      toast.success(result.message || "Clientes eliminados exitosamente");
+      setShowBulkDeleteDialog(false);
+      
+      // Refresh data
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sortBy,
+        sortOrder,
+      });
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
+      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
+      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
+      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
+      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+
+      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data: ClientsResponse = await refreshResponse.json();
+      setClients(data.data);
+      setTotal(data.total);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error("Error deleting clients:", error);
+      toast.error(error instanceof Error ? error.message : "Error al eliminar clientes");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -620,6 +676,15 @@ export default function Dashboard() {
                   disabled={isProcessing}
                 >
                   Exportar
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="destructive"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                  disabled={isProcessing}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar
                 </Button>
               </div>
             </div>
@@ -874,6 +939,35 @@ export default function Dashboard() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteClient}
+              disabled={isProcessing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isProcessing ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán permanentemente{" "}
+              {selectedRows.length} cliente{selectedRows.length > 1 ? "s" : ""} de la base
+              de datos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setShowBulkDeleteDialog(false)}
+              disabled={isProcessing}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
               disabled={isProcessing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
