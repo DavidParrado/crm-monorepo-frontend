@@ -5,9 +5,7 @@ export interface Role {
 
 export enum RoleEnum {
   Admin = 'Admin',
-  AgenteFTD = 'AgenteFTD',
-  AgenteRete = 'AgenteRete',
-  TeamLeaderFTD = 'TeamLeaderFTD',
-  TeamLeaderRete = 'TeamLeaderRete',
+  Agent = 'Agent',
+  TeamLeader = 'TeamLeader',
   Auditor = 'Auditor',
 }

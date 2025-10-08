@@ -81,10 +81,8 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
     const role = roles.find(r => r.id.toString() === selectedRoleId);
     if (!role) return false;
     return [
-      RoleEnum.TeamLeaderFTD,
-      RoleEnum.TeamLeaderRete,
-      RoleEnum.AgenteFTD,
-      RoleEnum.AgenteRete
+      RoleEnum.TeamLeader,
+      RoleEnum.Agent
     ].includes(role.name as RoleEnum);
   }, [selectedRoleId, roles]);
 
@@ -174,7 +172,7 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
     try {
       const params = new URLSearchParams();
       // Search for both TeamLeader roles
-      params.append("roleName", RoleEnum.TeamLeaderFTD);
+      params.append("roleName", RoleEnum.TeamLeader);
       if (selectedGroupId) {
         params.append("groupId", selectedGroupId);
       }
