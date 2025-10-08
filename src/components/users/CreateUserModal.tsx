@@ -54,6 +54,7 @@ interface CreateUserModalProps {
 export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUserModalProps) {
   const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [roles, setRoles] = useState<Role[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [teamLeaders, setTeamLeaders] = useState<User[]>([]);
@@ -94,12 +95,11 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
     return [RoleEnum.Admin, RoleEnum.Auditor].includes(role.name as RoleEnum);
   }, [selectedRoleId, roles]);
 
-  // Clear group and teamLeader when role changes to Admin/Auditor
+  // Clear group and teamLeader when role changes to Admin/Auditor (keep ext visible and optional)
   useEffect(() => {
     if (shouldHideGroupFields) {
       form.setValue("groupId", "");
       form.setValue("teamLeaderId", "");
-      form.setValue("ext", "");
     }
   }, [shouldHideGroupFields]);
 
@@ -117,10 +117,13 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   useEffect(() => {
     if (open) {
-      // Fetch roles and groups in parallel for faster loading
-      Promise.all([fetchRoles(), fetchGroups()]);
+      setInitialLoading(true);
       form.reset();
       setTeamLeaderSearch("");
+      // Fetch roles and groups in parallel for faster loading
+      Promise.all([fetchRoles(), fetchGroups()]).finally(() => {
+        setInitialLoading(false);
+      });
     }
   }, [open]);
 
@@ -253,9 +256,14 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+        {initialLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-sm text-muted-foreground">Cargando formulario...</div>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
@@ -336,6 +344,22 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="ext"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             {!shouldHideGroupFields && (
               <>
                 <FormField
@@ -411,22 +435,6 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="ext"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </>
             )}
 
@@ -445,6 +453,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );

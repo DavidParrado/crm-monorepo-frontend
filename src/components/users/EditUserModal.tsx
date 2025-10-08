@@ -54,6 +54,7 @@ interface EditUserModalProps {
 export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditUserModalProps) {
   const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [roles, setRoles] = useState<Role[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
   const [teamLeaders, setTeamLeaders] = useState<User[]>([]);
@@ -93,12 +94,11 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
     return [RoleEnum.Admin, RoleEnum.Auditor].includes(role.name as RoleEnum);
   }, [selectedRoleId, roles]);
 
-  // Clear group and teamLeader when role changes to Admin/Auditor
+  // Clear group and teamLeader when role changes to Admin/Auditor (keep ext visible and optional)
   useEffect(() => {
     if (shouldHideGroupFields) {
       form.setValue("groupId", "");
       form.setValue("teamLeaderId", "");
-      form.setValue("ext", "");
     }
   }, [shouldHideGroupFields]);
 
@@ -116,8 +116,7 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
 
   useEffect(() => {
     if (open) {
-      // Fetch roles and groups in parallel for faster loading
-      Promise.all([fetchRoles(), fetchGroups()]);
+      setInitialLoading(true);
       form.reset({
         firstName: user.firstName,
         lastName: user.lastName || "",
@@ -128,9 +127,15 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
         teamLeaderId: user.teamLeaderId?.toString() || "",
       });
       setTeamLeaderSearch("");
-      if (user.groupId) {
-        fetchTeamLeaders();
-      }
+      
+      // Fetch roles and groups in parallel for faster loading
+      Promise.all([fetchRoles(), fetchGroups()]).then(() => {
+        if (user.groupId) {
+          fetchTeamLeaders();
+        }
+      }).finally(() => {
+        setInitialLoading(false);
+      });
     }
   }, [open, user]);
 
@@ -264,9 +269,14 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
+        {initialLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-sm text-muted-foreground">Cargando formulario...</div>
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
               control={form.control}
               name="firstName"
               render={({ field }) => (
@@ -328,6 +338,22 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="ext"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -408,22 +434,6 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
                     </FormItem>
                   )}
                 />
-
-                <FormField
-                  control={form.control}
-                  name="ext"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Extensión {isRoleRequiringGroupAndExt && <span className="text-destructive">*</span>}
-                      </FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </>
             )}
 
@@ -442,6 +452,7 @@ export function EditUserModal({ user, open, onOpenChange, onUserUpdated }: EditU
             </div>
           </form>
         </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
