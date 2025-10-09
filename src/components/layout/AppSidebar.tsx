@@ -46,8 +46,6 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   const canAccessRoute = (routeRoles: string[]) => {
-    console.log('User Role:', user?.role?.name);
-    console.log('Route Roles:', routeRoles);
     if (!user || !user.role) return false;
     return user && routeRoles.includes(user.role.name);
   };
