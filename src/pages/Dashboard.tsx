@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Eye, Filter, Trash2 } from "lucide-react";
+import { Users, Eye, Filter, Trash2, UserPlus, UserCheck, Phone, Clock } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { RoleEnum } from "@/types/role";
@@ -8,6 +8,7 @@ import { API_URL } from "@/lib/constants";
 import { Client } from "@/types/client";
 import { Status } from "@/types/status";
 import { Group } from "@/types/group";
+import { Management } from "@/types/management";
 import { toast } from "sonner";
 import {
   Pagination,
@@ -65,11 +66,24 @@ interface FilterOptions {
   statuses?: Status[];
   assignedUsers?: { id: number; name: string }[];
   groups?: Group[];
+  managements?: Management[];
 }
 
 interface ClientsResponse {
   data: Client[];
   total: number;
+}
+
+interface DashboardStat {
+  count: number;
+  filter: Record<string, any>;
+}
+
+interface DashboardStats {
+  newClients?: DashboardStat;
+  assigned?: DashboardStat;
+  callBack?: DashboardStat;
+  pending?: DashboardStat;
 }
 
 export default function Dashboard() {
@@ -85,6 +99,8 @@ export default function Dashboard() {
   const [limit, setLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
   
   // Filters
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
@@ -92,6 +108,7 @@ export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedUser, setSelectedUser] = useState<string>("all");
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
+  const [selectedManagement, setSelectedManagement] = useState<string>("all");
   const [sortBy] = useState("createdAt");
   const [sortOrder] = useState<"ASC" | "DESC">("DESC");
   const [showFilters, setShowFilters] = useState(false);
@@ -107,6 +124,34 @@ export default function Dashboard() {
   const debouncedSearch = useDebounce(searchQuery, 500);
   
   const totalPages = Math.ceil(total / limit);
+
+  // Fetch dashboard stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      setIsLoadingStats(true);
+      try {
+        const response = await fetch(`${API_URL}/dashboard/stats`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) throw new Error("Error al cargar estadísticas");
+
+        const data = await response.json();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        toast.error("Error al cargar las estadísticas");
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    if (token) {
+      fetchStats();
+    }
+  }, [token]);
 
   // Fetch filter options
   useEffect(() => {
@@ -151,6 +196,7 @@ export default function Dashboard() {
         if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
         if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
         if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+        if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
 
         const response = await fetch(`${API_URL}/clients?${params}`, {
           headers: {
@@ -187,6 +233,7 @@ export default function Dashboard() {
     selectedStatus,
     selectedUser,
     selectedGroup,
+    selectedManagement,
     sortBy,
     sortOrder,
   ]);
@@ -213,6 +260,7 @@ export default function Dashboard() {
     setSelectedStatus("all");
     setSelectedUser("all");
     setSelectedGroup("all");
+    setSelectedManagement("all");
     setCurrentPage(1);
   };
 
@@ -221,12 +269,40 @@ export default function Dashboard() {
     (selectedCampaign && selectedCampaign !== "all") || 
     (selectedStatus && selectedStatus !== "all") || 
     (selectedUser && selectedUser !== "all") || 
-    (selectedGroup && selectedGroup !== "all");
+    (selectedGroup && selectedGroup !== "all") ||
+    (selectedManagement && selectedManagement !== "all");
 
   const userRole = user?.role?.name as RoleEnum;
   const canFilterByUser = userRole === RoleEnum.Admin || userRole === RoleEnum.TeamLeader;
   const canFilterByGroup = userRole === RoleEnum.Admin;
   const isAdmin = userRole === RoleEnum.Admin;
+
+  // Handle stat card click
+  const handleStatClick = (filter: Record<string, any>) => {
+    // Clear all filters first
+    setSelectedCountry("all");
+    setSelectedCampaign("all");
+    setSelectedStatus("all");
+    setSelectedUser("all");
+    setSelectedGroup("all");
+    setSelectedManagement("all");
+    
+    // Apply the filter from the card
+    if (filter.statusId) {
+      setSelectedStatus(filter.statusId.toString());
+    }
+    if (filter.lastManagementId) {
+      setSelectedManagement(filter.lastManagementId.toString());
+    }
+    if (filter.assignedToUserId === "notNull") {
+      // This would require backend support for a "hasAssignment" filter
+      // For now, we can show all clients and the user can use the assignedUser filter
+    }
+    
+    // Reset to page 1 and show filters
+    setCurrentPage(1);
+    setShowFilters(true);
+  };
 
   // Action handlers
   const handleBulkAssign = async () => {
@@ -272,6 +348,7 @@ export default function Dashboard() {
       if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
       if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
       if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
 
       const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -323,6 +400,7 @@ export default function Dashboard() {
       if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
       if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
       if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
 
       const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -413,6 +491,7 @@ export default function Dashboard() {
       if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
       if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
       if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
 
       const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -468,6 +547,7 @@ export default function Dashboard() {
       if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
       if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
       if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
+      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
 
       const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -491,6 +571,119 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1">
           Vista general de tus clientes y actividades
         </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoadingStats ? (
+          // Loading skeletons
+          [...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-4 w-24 mb-4" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            {/* Clientes Nuevos */}
+            {stats?.newClients && (
+              <Card
+                className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+                onClick={() => handleStatClick(stats.newClients!.filter)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Clientes Nuevos
+                      </p>
+                      <h3 className="text-3xl font-bold mt-2">
+                        {stats.newClients.count}
+                      </h3>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <UserPlus className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Asignados */}
+            {stats?.assigned && (
+              <Card
+                className="cursor-pointer transition-all hover:shadow-md hover:border-green-500/50"
+                onClick={() => handleStatClick(stats.assigned!.filter)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Asignados
+                      </p>
+                      <h3 className="text-3xl font-bold mt-2">
+                        {stats.assigned.count}
+                      </h3>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <UserCheck className="h-6 w-6 text-green-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Volver a Llamar */}
+            {stats?.callBack && (
+              <Card
+                className="cursor-pointer transition-all hover:shadow-md hover:border-orange-500/50"
+                onClick={() => handleStatClick(stats.callBack!.filter)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Volver a Llamar
+                      </p>
+                      <h3 className="text-3xl font-bold mt-2">
+                        {stats.callBack.count}
+                      </h3>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
+                      <Phone className="h-6 w-6 text-orange-600" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Pendientes */}
+            {stats?.pending && (
+              <Card
+                className="cursor-pointer transition-all hover:shadow-md hover:border-muted-foreground/50"
+                onClick={() => handleStatClick(stats.pending!.filter)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Pendientes
+                      </p>
+                      <h3 className="text-3xl font-bold mt-2">
+                        {stats.pending.count}
+                      </h3>
+                    </div>
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                      <Clock className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
       </div>
 
       {/* Tabla de Clientes */}
@@ -522,7 +715,8 @@ export default function Dashboard() {
                       selectedCampaign !== "all" && selectedCampaign,
                       selectedStatus !== "all" && selectedStatus,
                       selectedUser !== "all" && selectedUser,
-                      selectedGroup !== "all" && selectedGroup
+                      selectedGroup !== "all" && selectedGroup,
+                      selectedManagement !== "all" && selectedManagement
                     ].filter(Boolean).length}
                   </Badge>
                 )}
@@ -627,6 +821,26 @@ export default function Dashboard() {
                         {filterOptions.groups.map((group) => (
                           <SelectItem key={group.id} value={group.id.toString()}>
                             {group.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Management Filter */}
+                {filterOptions.managements && filterOptions.managements.length > 0 && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Última Gestión</label>
+                    <Select value={selectedManagement} onValueChange={setSelectedManagement}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas las gestiones" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        {filterOptions.managements.map((management) => (
+                          <SelectItem key={management.id} value={management.id.toString()}>
+                            {management.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
