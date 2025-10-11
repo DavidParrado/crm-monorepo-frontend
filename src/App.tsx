@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Imports from "./pages/Imports";
+import VoIP from "./pages/VoIP";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/imports" element={<Imports />} />
+            <Route path="/voip" element={<VoIP />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -8,6 +8,7 @@ import {
   LogOut,
   Building2,
   UserCircle,
+  Phone,
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,6 +38,7 @@ const mainItems = [
 const adminItems = [
   { title: "Usuarios", url: "/users", icon: Users, roles: [RoleEnum.Admin] },
   { title: "Importaciones", url: "/imports", icon: Upload, roles: [RoleEnum.Admin] },
+  { title: "VoIP", url: "/voip", icon: Phone, roles: [RoleEnum.Admin] },
   { title: "Configuración", url: "/settings", icon: Settings, roles: [RoleEnum.Admin] },
 ];
 
