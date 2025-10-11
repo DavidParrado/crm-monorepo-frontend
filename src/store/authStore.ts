@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await response.json();
-          
+
           set({
             token: data.access_token,
             user: data.user,
@@ -57,6 +57,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           token: null,
           isAuthenticated: false,
+          isLoading: false,
         });
       },
 
@@ -66,12 +67,12 @@ export const useAuthStore = create<AuthState>()(
 
       checkAuth: async () => {
         const { token } = get();
+
         if (!token) {
-          set({ isAuthenticated: false, user: null, isLoading: false });
+          set({ isAuthenticated: false, user: null, });
           return;
         }
 
-        set({ isLoading: true });
         try {
           const response = await fetch(`${API_URL}/auth/profile`, {
             headers: {
@@ -84,9 +85,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const user = await response.json();
-          set({ user, isAuthenticated: true, isLoading: false });
+          set({ user, isAuthenticated: true });
         } catch (error) {
-          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+          set({ user: null, token: null, isAuthenticated: false });
         }
       },
     }),
