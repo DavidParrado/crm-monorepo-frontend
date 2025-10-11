@@ -81,8 +81,8 @@ interface DashboardStat {
 
 interface DashboardStats {
   newClients?: DashboardStat;
-  assigned?: DashboardStat;
-  callBack?: DashboardStat;
+  assignedClients?: DashboardStat;
+  callAgain?: DashboardStat;
   pending?: DashboardStat;
 }
 
@@ -612,10 +612,10 @@ export default function Dashboard() {
             )}
 
             {/* Asignados */}
-            {stats?.assigned && (
+            {stats?.assignedClients && (
               <Card
                 className="cursor-pointer transition-all hover:shadow-md hover:border-green-500/50"
-                onClick={() => handleStatClick(stats.assigned!.filter)}
+                onClick={() => handleStatClick(stats.assignedClients!.filter)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -624,7 +624,7 @@ export default function Dashboard() {
                         Asignados
                       </p>
                       <h3 className="text-3xl font-bold mt-2">
-                        {stats.assigned.count}
+                        {stats.assignedClients.count}
                       </h3>
                     </div>
                     <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
@@ -636,10 +636,10 @@ export default function Dashboard() {
             )}
 
             {/* Volver a Llamar */}
-            {stats?.callBack && (
+            {stats?.callAgain && (
               <Card
                 className="cursor-pointer transition-all hover:shadow-md hover:border-orange-500/50"
-                onClick={() => handleStatClick(stats.callBack!.filter)}
+                onClick={() => handleStatClick(stats.callAgain!.filter)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -648,7 +648,7 @@ export default function Dashboard() {
                         Volver a Llamar
                       </p>
                       <h3 className="text-3xl font-bold mt-2">
-                        {stats.callBack.count}
+                        {stats.callAgain.count}
                       </h3>
                     </div>
                     <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
