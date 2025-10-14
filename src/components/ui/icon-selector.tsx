@@ -99,6 +99,14 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
           <div
             ref={parentRef}
             className="h-[300px] overflow-y-auto"
+            tabIndex={0}
+            onWheel={(e) => {
+              const el = parentRef.current;
+              if (el) {
+                el.scrollTop += e.deltaY;
+                e.preventDefault();
+              }
+            }}
           >
             {virtualizer.getVirtualItems().length > 0 ? (
               <div

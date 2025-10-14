@@ -21,6 +21,17 @@ const FallbackIcon = ({ size = 24, ...props }: LucideProps) => (
   <HelpCircle size={size} {...props} className="text-muted-foreground" />
 );
 
+// Cache for lazily imported icons to prevent re-suspense/flicker
+const iconCache = new Map<string, ComponentType<LucideProps>>();
+
+function getLazyIcon(name: keyof typeof dynamicIconImports) {
+  const cached = iconCache.get(name as string);
+  if (cached) return cached;
+  const Comp = lazy(dynamicIconImports[name]) as unknown as ComponentType<LucideProps>;
+  iconCache.set(name as string, Comp);
+  return Comp;
+}
+
 export function DynamicIcon({ name, fallback: CustomFallback, ...props }: DynamicIconProps) {
   // Guard clause: validate input
   if (!name || typeof name !== "string" || name.trim() === "") {
@@ -36,8 +47,8 @@ export function DynamicIcon({ name, fallback: CustomFallback, ...props }: Dynami
     return <Fallback {...props} />;
   }
 
-  // Dynamic import with lazy loading
-  const LucideIcon = lazy(dynamicIconImports[iconName]);
+  // Dynamic import with lazy loading using cache to avoid flicker
+  const LucideIcon = getLazyIcon(iconName);
 
   return (
     <Suspense fallback={<LoadingPlaceholder size={props.size} />}>
