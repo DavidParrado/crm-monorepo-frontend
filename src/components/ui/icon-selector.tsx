@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,14 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
     overscan: 10,
   });
 
+  // Re-measure when popover opens or list changes to avoid blank state
+  useLayoutEffect(() => {
+    if (open && parentRef.current) {
+      virtualizer.measure();
+      virtualizer.scrollToIndex(0);
+    }
+  }, [open, filteredIcons.length]);
+
   const handleIconSelect = (iconName: string) => {
     onSelect(iconName);
     setOpen(false);
@@ -75,7 +83,7 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0" align="start">
+        <PopoverContent className="z-50 w-[400px] p-0 bg-popover text-popover-foreground" align="start">
           <div className="p-3 border-b">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -92,36 +100,58 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
             ref={parentRef}
             className="h-[300px] overflow-y-auto"
           >
-            <div
-              style={{
-                height: `${virtualizer.getTotalSize()}px`,
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {virtualizer.getVirtualItems().map((virtualRow) => {
-                const iconName = filteredIcons[virtualRow.index];
-                const isSelected = value === iconName;
-                
-                return (
-                  <button
-                    key={virtualRow.key}
-                    onClick={() => handleIconSelect(iconName)}
-                    className={cn(
-                      "absolute left-0 top-0 w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors",
-                      isSelected && "bg-accent"
-                    )}
-                    style={{
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    <DynamicIcon name={iconName} size={24} />
-                    <span className="text-sm flex-1 text-left">{iconName}</span>
-                    {isSelected && <Check className="h-4 w-4" />}
-                  </button>
-                );
-              })}
-            </div>
+            {virtualizer.getVirtualItems().length > 0 ? (
+              <div
+                style={{
+                  height: `${virtualizer.getTotalSize()}px`,
+                  width: "100%",
+                  position: "relative",
+                }}
+              >
+                {virtualizer.getVirtualItems().map((virtualRow) => {
+                  const iconName = filteredIcons[virtualRow.index];
+                  const isSelected = value === iconName;
+                  
+                  return (
+                    <button
+                      key={virtualRow.key}
+                      onClick={() => handleIconSelect(iconName)}
+                      className={cn(
+                        "absolute left-0 top-0 w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors",
+                        isSelected && "bg-accent"
+                      )}
+                      style={{
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
+                      <DynamicIcon name={iconName} size={24} />
+                      <span className="text-sm flex-1 text-left">{iconName}</span>
+                      {isSelected && <Check className="h-4 w-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-2">
+                {filteredIcons.slice(0, 30).map((iconName) => {
+                  const isSelected = value === iconName;
+                  return (
+                    <button
+                      key={iconName}
+                      onClick={() => handleIconSelect(iconName)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors rounded",
+                        isSelected && "bg-accent"
+                      )}
+                    >
+                      <DynamicIcon name={iconName} size={24} />
+                      <span className="text-sm flex-1 text-left">{iconName}</span>
+                      {isSelected && <Check className="h-4 w-4" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           
           {filteredIcons.length === 0 && (
