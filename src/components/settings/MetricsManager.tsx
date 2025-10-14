@@ -4,6 +4,7 @@ import { API_URL } from "@/lib/constants";
 import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
 import { Status } from "@/types/status";
 import { Management } from "@/types/management";
+import { Group } from "@/types/group";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,9 +50,9 @@ import { DynamicIcon } from "@/components/ui/dynamic-icon";
 
 interface FilterOptions {
   countries?: string[];
-  campaigns?: string[];
   statuses?: Status[];
   managements?: Management[];
+  groups?: Group[];
 }
 
 export default function MetricsManager() {
@@ -138,10 +139,10 @@ export default function MetricsManager() {
     switch (formFilterField) {
       case "statusId":
       case "lastManagementId":
+      case "groupId":
         filterObj[formFilterField] = parseInt(formFilterValue);
         break;
       case "country":
-      case "campaign":
         filterObj[formFilterField] = formFilterValue;
         break;
       default:
@@ -152,7 +153,13 @@ export default function MetricsManager() {
   };
 
   // Parse filter object to form fields
-  const parseFilterToFormFields = (filter: Record<string, any>) => {
+  const parseFilterToFormFields = (filter: Record<string, any> | null | undefined) => {
+    if (!filter || typeof filter !== 'object' || Object.keys(filter).length === 0) {
+      setFormFilterField("");
+      setFormFilterValue("");
+      return;
+    }
+    
     const field = Object.keys(filter)[0];
     const value = filter[field];
     
@@ -445,7 +452,7 @@ export default function MetricsManager() {
                     <SelectItem value="statusId">Estado del Cliente</SelectItem>
                     <SelectItem value="lastManagementId">Última Gestión</SelectItem>
                     <SelectItem value="country">País</SelectItem>
-                    <SelectItem value="campaign">Campaña</SelectItem>
+                    <SelectItem value="groupId">Grupo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -495,15 +502,15 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "campaign" && (
+                  {formFilterField === "groupId" && (
                     <Select value={formFilterValue} onValueChange={setFormFilterValue}>
                       <SelectTrigger id="create-filter-value">
-                        <SelectValue placeholder="Selecciona una campaña" />
+                        <SelectValue placeholder="Selecciona un grupo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {filterOptions.campaigns?.map((campaign) => (
-                          <SelectItem key={campaign} value={campaign}>
-                            {campaign}
+                        {filterOptions.groups?.map((group) => (
+                          <SelectItem key={group.id} value={group.id.toString()}>
+                            {group.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -594,7 +601,7 @@ export default function MetricsManager() {
                     <SelectItem value="statusId">Estado del Cliente</SelectItem>
                     <SelectItem value="lastManagementId">Última Gestión</SelectItem>
                     <SelectItem value="country">País</SelectItem>
-                    <SelectItem value="campaign">Campaña</SelectItem>
+                    <SelectItem value="groupId">Grupo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -644,15 +651,15 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "campaign" && (
+                  {formFilterField === "groupId" && (
                     <Select value={formFilterValue} onValueChange={setFormFilterValue}>
                       <SelectTrigger id="edit-filter-value">
-                        <SelectValue placeholder="Selecciona una campaña" />
+                        <SelectValue placeholder="Selecciona un grupo" />
                       </SelectTrigger>
                       <SelectContent>
-                        {filterOptions.campaigns?.map((campaign) => (
-                          <SelectItem key={campaign} value={campaign}>
-                            {campaign}
+                        {filterOptions.groups?.map((group) => (
+                          <SelectItem key={group.id} value={group.id.toString()}>
+                            {group.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

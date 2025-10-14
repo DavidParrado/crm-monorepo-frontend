@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { Button } from "@/components/ui/button";
@@ -39,13 +39,13 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
   }, [allIconNames, searchQuery]);
 
   // Setup virtualizer for performance
-  const parentRef = useMemo(() => ({ current: null as HTMLDivElement | null }), []);
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const virtualizer = useVirtualizer({
     count: filteredIcons.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 80,
-    overscan: 5,
+    estimateSize: () => 60,
+    overscan: 10,
   });
 
   const handleIconSelect = (iconName: string) => {
@@ -89,7 +89,7 @@ export function IconSelector({ value, onSelect, label }: IconSelectorProps) {
           </div>
           
           <div
-            ref={parentRef as any}
+            ref={parentRef}
             className="h-[300px] overflow-y-auto"
           >
             <div
