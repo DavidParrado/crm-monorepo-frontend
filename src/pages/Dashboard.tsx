@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Eye, Filter, Trash2, UserPlus, UserCheck, Phone, Clock } from "lucide-react";
+import { Users, Eye, Filter, Trash2 } from "lucide-react";
+import { DynamicIcon } from "@/components/ui/dynamic-icon";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { RoleEnum } from "@/types/role";
@@ -599,11 +600,11 @@ export default function Dashboard() {
                     </h3>
                   </div>
                   <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    {stat.icon === "users" && <UserPlus className="h-6 w-6 text-primary" />}
-                    {stat.icon === "check-user" && <UserCheck className="h-6 w-6 text-primary" />}
-                    {stat.icon === "phone-call" && <Phone className="h-6 w-6 text-primary" />}
-                    {stat.icon === "clock" && <Clock className="h-6 w-6 text-primary" />}
-                    {!stat.icon && <Users className="h-6 w-6 text-primary" />}
+                    {stat.icon ? (
+                      <DynamicIcon name={stat.icon} className="h-6 w-6 text-primary" />
+                    ) : (
+                      <Users className="h-6 w-6 text-primary" />
+                    )}
                   </div>
                 </div>
               </CardContent>

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { API_URL } from "@/lib/constants";
 import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
+import { Status } from "@/types/status";
+import { Management } from "@/types/management";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,15 +35,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { IconSelector } from "@/components/ui/icon-selector";
+import { DynamicIcon } from "@/components/ui/dynamic-icon";
+
+interface FilterOptions {
+  countries?: string[];
+  campaigns?: string[];
+  statuses?: Status[];
+  managements?: Management[];
+}
 
 export default function MetricsManager() {
   const { token } = useAuthStore();
   const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
   
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -53,7 +71,8 @@ export default function MetricsManager() {
   const [formName, setFormName] = useState("");
   const [formKey, setFormKey] = useState("");
   const [formIcon, setFormIcon] = useState("");
-  const [formFilterCriteria, setFormFilterCriteria] = useState("");
+  const [formFilterField, setFormFilterField] = useState<string>("");
+  const [formFilterValue, setFormFilterValue] = useState<string>("");
   const [formDisplayOrder, setFormDisplayOrder] = useState("");
   const [formIsActive, setFormIsActive] = useState(true);
 
@@ -76,9 +95,27 @@ export default function MetricsManager() {
     }
   };
 
+  // Fetch filter options
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await fetch(`${API_URL}/clients/filter-options`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Error al cargar opciones de filtro");
+
+      const data = await response.json();
+      setFilterOptions(data);
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+      toast.error("Error al cargar las opciones de filtro");
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchMetrics();
+      fetchFilterOptions();
     }
   }, [token]);
 
@@ -86,22 +123,52 @@ export default function MetricsManager() {
     setFormName("");
     setFormKey("");
     setFormIcon("");
-    setFormFilterCriteria("");
+    setFormFilterField("");
+    setFormFilterValue("");
     setFormDisplayOrder("");
     setFormIsActive(true);
   };
 
+  // Build filter object from form fields
+  const buildFilterObject = (): Record<string, any> | null => {
+    if (!formFilterField || !formFilterValue) return null;
+
+    const filterObj: Record<string, any> = {};
+    
+    switch (formFilterField) {
+      case "statusId":
+      case "lastManagementId":
+        filterObj[formFilterField] = parseInt(formFilterValue);
+        break;
+      case "country":
+      case "campaign":
+        filterObj[formFilterField] = formFilterValue;
+        break;
+      default:
+        return null;
+    }
+
+    return filterObj;
+  };
+
+  // Parse filter object to form fields
+  const parseFilterToFormFields = (filter: Record<string, any>) => {
+    const field = Object.keys(filter)[0];
+    const value = filter[field];
+    
+    setFormFilterField(field);
+    setFormFilterValue(value?.toString() || "");
+  };
+
   const handleCreate = async () => {
-    if (!formName || !formKey || !formFilterCriteria) {
-      toast.error("Nombre, clave y criterio de filtro son requeridos");
+    if (!formName || !formKey) {
+      toast.error("Nombre y clave son requeridos");
       return;
     }
 
-    let filterObj: Record<string, any>;
-    try {
-      filterObj = JSON.parse(formFilterCriteria);
-    } catch (error) {
-      toast.error("El criterio de filtro debe ser un JSON válido");
+    const filterObj = buildFilterObject();
+    if (!filterObj) {
+      toast.error("Debes configurar un filtro válido");
       return;
     }
 
@@ -151,15 +218,7 @@ export default function MetricsManager() {
       return;
     }
 
-    let filterObj: Record<string, any> | undefined;
-    if (formFilterCriteria) {
-      try {
-        filterObj = JSON.parse(formFilterCriteria);
-      } catch (error) {
-        toast.error("El criterio de filtro debe ser un JSON válido");
-        return;
-      }
-    }
+    const filterObj = (formFilterField && formFilterValue) ? buildFilterObject() : undefined;
 
     setIsSubmitting(true);
     try {
@@ -232,7 +291,7 @@ export default function MetricsManager() {
     setFormName(metric.name);
     setFormKey(metric.key);
     setFormIcon(metric.icon || "");
-    setFormFilterCriteria(JSON.stringify(metric.filter, null, 2));
+    parseFilterToFormFields(metric.filter);
     setFormDisplayOrder(metric.displayOrder?.toString() || "");
     setFormIsActive(metric.isActive ?? true);
     setShowEditDialog(true);
@@ -272,6 +331,7 @@ export default function MetricsManager() {
               <TableHead>Nombre</TableHead>
               <TableHead>Clave</TableHead>
               <TableHead>Ícono</TableHead>
+              <TableHead>Filtro</TableHead>
               <TableHead>Orden</TableHead>
               <TableHead>Activa</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -280,7 +340,7 @@ export default function MetricsManager() {
           <TableBody>
             {metrics.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
                   No hay métricas configuradas
                 </TableCell>
               </TableRow>
@@ -289,7 +349,21 @@ export default function MetricsManager() {
                 <TableRow key={metric.id}>
                   <TableCell className="font-medium">{metric.name}</TableCell>
                   <TableCell>{metric.key}</TableCell>
-                  <TableCell>{metric.icon || "-"}</TableCell>
+                  <TableCell>
+                    {metric.icon ? (
+                      <div className="flex items-center gap-2">
+                        <DynamicIcon name={metric.icon} size={18} />
+                        <span className="text-xs text-muted-foreground">{metric.icon}</span>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <code className="text-xs bg-muted px-2 py-1 rounded">
+                      {JSON.stringify(metric.filter)}
+                    </code>
+                  </TableCell>
                   <TableCell>{metric.displayOrder ?? "-"}</TableCell>
                   <TableCell>
                     <span className={metric.isActive ? "text-green-600" : "text-red-600"}>
@@ -349,25 +423,96 @@ export default function MetricsManager() {
                 placeholder="newClients"
               />
             </div>
-            <div>
-              <Label htmlFor="create-icon">Ícono (opcional)</Label>
-              <Input
-                id="create-icon"
-                value={formIcon}
-                onChange={(e) => setFormIcon(e.target.value)}
-                placeholder="users"
-              />
+            <IconSelector
+              label="Ícono (opcional)"
+              value={formIcon}
+              onSelect={setFormIcon}
+            />
+            
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+              <Label className="text-base font-semibold">Condición de Filtro *</Label>
+              
+              <div>
+                <Label htmlFor="create-filter-field">Campo a Filtrar</Label>
+                <Select value={formFilterField} onValueChange={(val) => {
+                  setFormFilterField(val);
+                  setFormFilterValue(""); // Reset value when field changes
+                }}>
+                  <SelectTrigger id="create-filter-field">
+                    <SelectValue placeholder="Selecciona un campo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="statusId">Estado del Cliente</SelectItem>
+                    <SelectItem value="lastManagementId">Última Gestión</SelectItem>
+                    <SelectItem value="country">País</SelectItem>
+                    <SelectItem value="campaign">Campaña</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formFilterField && (
+                <div>
+                  <Label htmlFor="create-filter-value">Valor</Label>
+                  {formFilterField === "statusId" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="create-filter-value">
+                        <SelectValue placeholder="Selecciona un estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.statuses?.map((status) => (
+                          <SelectItem key={status.id} value={status.id.toString()}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "lastManagementId" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="create-filter-value">
+                        <SelectValue placeholder="Selecciona una gestión" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.managements?.map((management) => (
+                          <SelectItem key={management.id} value={management.id.toString()}>
+                            {management.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "country" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="create-filter-value">
+                        <SelectValue placeholder="Selecciona un país" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.countries?.map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "campaign" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="create-filter-value">
+                        <SelectValue placeholder="Selecciona una campaña" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.campaigns?.map((campaign) => (
+                          <SelectItem key={campaign} value={campaign}>
+                            {campaign}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
             </div>
-            <div>
-              <Label htmlFor="create-filter">Criterio de Filtro * (JSON)</Label>
-              <Textarea
-                id="create-filter"
-                value={formFilterCriteria}
-                onChange={(e) => setFormFilterCriteria(e.target.value)}
-                placeholder='{ "statusId": 1 }'
-                rows={4}
-              />
-            </div>
+
             <div>
               <Label htmlFor="create-order">Orden de Visualización</Label>
               <Input
@@ -427,23 +572,96 @@ export default function MetricsManager() {
                 onChange={(e) => setFormKey(e.target.value)}
               />
             </div>
-            <div>
-              <Label htmlFor="edit-icon">Ícono</Label>
-              <Input
-                id="edit-icon"
-                value={formIcon}
-                onChange={(e) => setFormIcon(e.target.value)}
-              />
+            <IconSelector
+              label="Ícono"
+              value={formIcon}
+              onSelect={setFormIcon}
+            />
+            
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/50">
+              <Label className="text-base font-semibold">Condición de Filtro</Label>
+              
+              <div>
+                <Label htmlFor="edit-filter-field">Campo a Filtrar</Label>
+                <Select value={formFilterField} onValueChange={(val) => {
+                  setFormFilterField(val);
+                  setFormFilterValue(""); // Reset value when field changes
+                }}>
+                  <SelectTrigger id="edit-filter-field">
+                    <SelectValue placeholder="Selecciona un campo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="statusId">Estado del Cliente</SelectItem>
+                    <SelectItem value="lastManagementId">Última Gestión</SelectItem>
+                    <SelectItem value="country">País</SelectItem>
+                    <SelectItem value="campaign">Campaña</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formFilterField && (
+                <div>
+                  <Label htmlFor="edit-filter-value">Valor</Label>
+                  {formFilterField === "statusId" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="edit-filter-value">
+                        <SelectValue placeholder="Selecciona un estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.statuses?.map((status) => (
+                          <SelectItem key={status.id} value={status.id.toString()}>
+                            {status.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "lastManagementId" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="edit-filter-value">
+                        <SelectValue placeholder="Selecciona una gestión" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.managements?.map((management) => (
+                          <SelectItem key={management.id} value={management.id.toString()}>
+                            {management.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "country" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="edit-filter-value">
+                        <SelectValue placeholder="Selecciona un país" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.countries?.map((country) => (
+                          <SelectItem key={country} value={country}>
+                            {country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {formFilterField === "campaign" && (
+                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                      <SelectTrigger id="edit-filter-value">
+                        <SelectValue placeholder="Selecciona una campaña" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filterOptions.campaigns?.map((campaign) => (
+                          <SelectItem key={campaign} value={campaign}>
+                            {campaign}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
             </div>
-            <div>
-              <Label htmlFor="edit-filter">Criterio de Filtro (JSON)</Label>
-              <Textarea
-                id="edit-filter"
-                value={formFilterCriteria}
-                onChange={(e) => setFormFilterCriteria(e.target.value)}
-                rows={4}
-              />
-            </div>
+
             <div>
               <Label htmlFor="edit-order">Orden de Visualización</Label>
               <Input
