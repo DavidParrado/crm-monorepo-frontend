@@ -75,15 +75,11 @@ interface ClientsResponse {
 }
 
 interface DashboardStat {
+  name: string;
+  key: string;
+  icon: string | null;
   count: number;
   filter: Record<string, any>;
-}
-
-interface DashboardStats {
-  newClients?: DashboardStat;
-  assignedClients?: DashboardStat;
-  callAgain?: DashboardStat;
-  pending?: DashboardStat;
 }
 
 export default function Dashboard() {
@@ -99,7 +95,7 @@ export default function Dashboard() {
   const [limit, setLimit] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<DashboardStat[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   
   // Filters
@@ -573,7 +569,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Dynamic rendering */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoadingStats ? (
           // Loading skeletons
@@ -586,103 +582,33 @@ export default function Dashboard() {
             </Card>
           ))
         ) : (
-          <>
-            {/* Clientes Nuevos */}
-            {stats?.newClients && (
-              <Card
-                className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
-                onClick={() => handleStatClick(stats.newClients!.filter)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Clientes Nuevos
-                      </p>
-                      <h3 className="text-3xl font-bold mt-2">
-                        {stats.newClients.count}
-                      </h3>
-                    </div>
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <UserPlus className="h-6 w-6 text-primary" />
-                    </div>
+          stats.map((stat) => (
+            <Card
+              key={stat.key}
+              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
+              onClick={() => handleStatClick(stat.filter)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {stat.name}
+                    </p>
+                    <h3 className="text-3xl font-bold mt-2">
+                      {stat.count}
+                    </h3>
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Asignados */}
-            {stats?.assignedClients && (
-              <Card
-                className="cursor-pointer transition-all hover:shadow-md hover:border-green-500/50"
-                onClick={() => handleStatClick(stats.assignedClients!.filter)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Asignados
-                      </p>
-                      <h3 className="text-3xl font-bold mt-2">
-                        {stats.assignedClients.count}
-                      </h3>
-                    </div>
-                    <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                      <UserCheck className="h-6 w-6 text-green-600" />
-                    </div>
+                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    {stat.icon === "users" && <UserPlus className="h-6 w-6 text-primary" />}
+                    {stat.icon === "check-user" && <UserCheck className="h-6 w-6 text-primary" />}
+                    {stat.icon === "phone-call" && <Phone className="h-6 w-6 text-primary" />}
+                    {stat.icon === "clock" && <Clock className="h-6 w-6 text-primary" />}
+                    {!stat.icon && <Users className="h-6 w-6 text-primary" />}
                   </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Volver a Llamar */}
-            {stats?.callAgain && (
-              <Card
-                className="cursor-pointer transition-all hover:shadow-md hover:border-orange-500/50"
-                onClick={() => handleStatClick(stats.callAgain!.filter)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Volver a Llamar
-                      </p>
-                      <h3 className="text-3xl font-bold mt-2">
-                        {stats.callAgain.count}
-                      </h3>
-                    </div>
-                    <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                      <Phone className="h-6 w-6 text-orange-600" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Pendientes */}
-            {stats?.pending && (
-              <Card
-                className="cursor-pointer transition-all hover:shadow-md hover:border-muted-foreground/50"
-                onClick={() => handleStatClick(stats.pending!.filter)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Pendientes
-                      </p>
-                      <h3 className="text-3xl font-bold mt-2">
-                        {stats.pending.count}
-                      </h3>
-                    </div>
-                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                      <Clock className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </>
+                </div>
+              </CardContent>
+            </Card>
+          ))
         )}
       </div>
 

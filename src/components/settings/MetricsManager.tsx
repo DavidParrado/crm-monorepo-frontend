@@ -1,0 +1,501 @@
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { API_URL } from "@/lib/constants";
+import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+
+export default function MetricsManager() {
+  const { token } = useAuthStore();
+  const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Dialog states
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState<DashboardMetric | null>(null);
+  
+  // Form states
+  const [formName, setFormName] = useState("");
+  const [formKey, setFormKey] = useState("");
+  const [formIcon, setFormIcon] = useState("");
+  const [formFilterCriteria, setFormFilterCriteria] = useState("");
+  const [formDisplayOrder, setFormDisplayOrder] = useState("");
+  const [formIsActive, setFormIsActive] = useState(true);
+
+  const fetchMetrics = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/dashboard/metrics`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Error al cargar métricas");
+
+      const data = await response.json();
+      setMetrics(data);
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+      toast.error("Error al cargar las métricas");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchMetrics();
+    }
+  }, [token]);
+
+  const resetForm = () => {
+    setFormName("");
+    setFormKey("");
+    setFormIcon("");
+    setFormFilterCriteria("");
+    setFormDisplayOrder("");
+    setFormIsActive(true);
+  };
+
+  const handleCreate = async () => {
+    if (!formName || !formKey || !formFilterCriteria) {
+      toast.error("Nombre, clave y criterio de filtro son requeridos");
+      return;
+    }
+
+    let filterObj: Record<string, any>;
+    try {
+      filterObj = JSON.parse(formFilterCriteria);
+    } catch (error) {
+      toast.error("El criterio de filtro debe ser un JSON válido");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const body: CreateMetricDto = {
+        name: formName,
+        key: formKey,
+        filterCriteria: filterObj,
+        isActive: formIsActive,
+      };
+
+      if (formIcon) body.icon = formIcon;
+      if (formDisplayOrder) body.displayOrder = parseInt(formDisplayOrder);
+
+      const response = await fetch(`${API_URL}/dashboard/metrics`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al crear métrica");
+      }
+
+      toast.success("Métrica creada exitosamente");
+      setShowCreateDialog(false);
+      resetForm();
+      fetchMetrics();
+    } catch (error) {
+      console.error("Error creating metric:", error);
+      toast.error(error instanceof Error ? error.message : "Error al crear la métrica");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!selectedMetric) return;
+
+    if (!formName) {
+      toast.error("El nombre es requerido");
+      return;
+    }
+
+    let filterObj: Record<string, any> | undefined;
+    if (formFilterCriteria) {
+      try {
+        filterObj = JSON.parse(formFilterCriteria);
+      } catch (error) {
+        toast.error("El criterio de filtro debe ser un JSON válido");
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      const body: UpdateMetricDto = {
+        name: formName,
+        isActive: formIsActive,
+      };
+
+      if (formKey) body.key = formKey;
+      if (formIcon) body.icon = formIcon;
+      if (formDisplayOrder) body.displayOrder = parseInt(formDisplayOrder);
+      if (filterObj) body.filterCriteria = filterObj;
+
+      const response = await fetch(`${API_URL}/dashboard/metrics/${selectedMetric.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al actualizar métrica");
+      }
+
+      toast.success("Métrica actualizada exitosamente");
+      setShowEditDialog(false);
+      setSelectedMetric(null);
+      resetForm();
+      fetchMetrics();
+    } catch (error) {
+      console.error("Error updating metric:", error);
+      toast.error(error instanceof Error ? error.message : "Error al actualizar la métrica");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedMetric?.id) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`${API_URL}/dashboard/metrics/${selectedMetric.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Error al eliminar métrica");
+      }
+
+      toast.success("Métrica eliminada exitosamente");
+      setShowDeleteDialog(false);
+      setSelectedMetric(null);
+      fetchMetrics();
+    } catch (error) {
+      console.error("Error deleting metric:", error);
+      toast.error(error instanceof Error ? error.message : "Error al eliminar la métrica");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const openEditDialog = (metric: DashboardMetric) => {
+    setSelectedMetric(metric);
+    setFormName(metric.name);
+    setFormKey(metric.key);
+    setFormIcon(metric.icon || "");
+    setFormFilterCriteria(JSON.stringify(metric.filter, null, 2));
+    setFormDisplayOrder(metric.displayOrder?.toString() || "");
+    setFormIsActive(metric.isActive ?? true);
+    setShowEditDialog(true);
+  };
+
+  const openDeleteDialog = (metric: DashboardMetric) => {
+    setSelectedMetric(metric);
+    setShowDeleteDialog(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          Configura las tarjetas del dashboard y sus filtros
+        </p>
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Nueva Métrica
+        </Button>
+      </div>
+
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Clave</TableHead>
+              <TableHead>Ícono</TableHead>
+              <TableHead>Orden</TableHead>
+              <TableHead>Activa</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {metrics.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  No hay métricas configuradas
+                </TableCell>
+              </TableRow>
+            ) : (
+              metrics.map((metric) => (
+                <TableRow key={metric.id}>
+                  <TableCell className="font-medium">{metric.name}</TableCell>
+                  <TableCell>{metric.key}</TableCell>
+                  <TableCell>{metric.icon || "-"}</TableCell>
+                  <TableCell>{metric.displayOrder ?? "-"}</TableCell>
+                  <TableCell>
+                    <span className={metric.isActive ? "text-green-600" : "text-red-600"}>
+                      {metric.isActive ? "Sí" : "No"}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(metric)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(metric)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Create Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nueva Métrica</DialogTitle>
+            <DialogDescription>
+              Crea una nueva métrica para mostrar en el dashboard
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="create-name">Nombre *</Label>
+              <Input
+                id="create-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="Clientes Nuevos"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-key">Clave * (sin espacios)</Label>
+              <Input
+                id="create-key"
+                value={formKey}
+                onChange={(e) => setFormKey(e.target.value)}
+                placeholder="newClients"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-icon">Ícono (opcional)</Label>
+              <Input
+                id="create-icon"
+                value={formIcon}
+                onChange={(e) => setFormIcon(e.target.value)}
+                placeholder="users"
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-filter">Criterio de Filtro * (JSON)</Label>
+              <Textarea
+                id="create-filter"
+                value={formFilterCriteria}
+                onChange={(e) => setFormFilterCriteria(e.target.value)}
+                placeholder='{ "statusId": 1 }'
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label htmlFor="create-order">Orden de Visualización</Label>
+              <Input
+                id="create-order"
+                type="number"
+                value={formDisplayOrder}
+                onChange={(e) => setFormDisplayOrder(e.target.value)}
+                placeholder="1"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="create-active"
+                checked={formIsActive}
+                onCheckedChange={(checked) => setFormIsActive(checked as boolean)}
+              />
+              <Label htmlFor="create-active">Métrica activa</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCreateDialog(false);
+              resetForm();
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreate} disabled={isSubmitting}>
+              {isSubmitting ? "Creando..." : "Crear"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Métrica</DialogTitle>
+            <DialogDescription>
+              Modifica los datos de la métrica
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Nombre *</Label>
+              <Input
+                id="edit-name"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-key">Clave</Label>
+              <Input
+                id="edit-key"
+                value={formKey}
+                onChange={(e) => setFormKey(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-icon">Ícono</Label>
+              <Input
+                id="edit-icon"
+                value={formIcon}
+                onChange={(e) => setFormIcon(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-filter">Criterio de Filtro (JSON)</Label>
+              <Textarea
+                id="edit-filter"
+                value={formFilterCriteria}
+                onChange={(e) => setFormFilterCriteria(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-order">Orden de Visualización</Label>
+              <Input
+                id="edit-order"
+                type="number"
+                value={formDisplayOrder}
+                onChange={(e) => setFormDisplayOrder(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="edit-active"
+                checked={formIsActive}
+                onCheckedChange={(checked) => setFormIsActive(checked as boolean)}
+              />
+              <Label htmlFor="edit-active">Métrica activa</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowEditDialog(false);
+              setSelectedMetric(null);
+              resetForm();
+            }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEdit} disabled={isSubmitting}>
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar métrica?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La métrica "{selectedMetric?.name}" será eliminada permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedMetric(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isSubmitting}>
+              {isSubmitting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
