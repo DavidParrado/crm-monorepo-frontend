@@ -351,7 +351,7 @@ export default function MetricsManager() {
     setFormName(metric.name);
     setFormKey(metric.key);
     setFormIcon(metric.icon || "");
-    parseFilterToFormFields(metric.filter);
+    parseFilterToFormFields(metric.filterCriteria);
     setFormDisplayOrder(metric.displayOrder?.toString() || "");
     setFormIsActive(metric.isActive ?? true);
     setShowEditDialog(true);
@@ -420,7 +420,7 @@ export default function MetricsManager() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {renderFilterDisplay(metric.filter)}
+                    {renderFilterDisplay(metric.filterCriteria)}
                   </TableCell>
                   <TableCell>{metric.displayOrder ?? "-"}</TableCell>
                   <TableCell>

@@ -4,7 +4,7 @@ export interface DashboardMetric {
   key: string;
   icon: string | null;
   count?: number;
-  filter: Record<string, any>;
+  filterCriteria: Record<string, any>;
   displayOrder?: number;
   isActive?: boolean;
 }
