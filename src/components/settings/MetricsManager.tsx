@@ -55,6 +55,14 @@ interface FilterOptions {
   groups?: Group[];
 }
 
+// Mapeo de campos de filtro a etiquetas legibles y entidad
+const FILTER_FIELD_MAP: Record<string, { label: string; entity: keyof FilterOptions }> = {
+  'statusId': { label: 'Estado del Cliente', entity: 'statuses' },
+  'lastManagementId': { label: 'Última Gestión', entity: 'managements' },
+  'country': { label: 'País', entity: 'countries' },
+  'groupId': { label: 'Grupo', entity: 'groups' }
+};
+
 export default function MetricsManager() {
   const { token } = useAuthStore();
   const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
@@ -128,6 +136,51 @@ export default function MetricsManager() {
     setFormFilterValue("");
     setFormDisplayOrder("");
     setFormIsActive(true);
+  };
+
+  // Obtener el valor legible de un filtro
+  const getFilterDisplayValue = (field: string, value: any): string => {
+    if (!field || value === null || value === undefined) return '-';
+    
+    switch(field) {
+      case 'statusId':
+        const status = filterOptions.statuses?.find(s => s.id === value);
+        return status ? status.name : value.toString();
+      case 'lastManagementId':
+        const mgmt = filterOptions.managements?.find(m => m.id === value);
+        return mgmt ? mgmt.name : value.toString();
+      case 'groupId':
+        const group = filterOptions.groups?.find(g => g.id === value);
+        return group ? group.name : value.toString();
+      case 'country':
+        return value.toString();
+      default:
+        return value.toString();
+    }
+  };
+
+  // Renderizar filtro de forma legible en la tabla
+  const renderFilterDisplay = (filter: Record<string, any> | null | undefined) => {
+    if (!filter || Object.keys(filter).length === 0) {
+      return <span className="text-muted-foreground">Sin filtro</span>;
+    }
+    
+    const field = Object.keys(filter)[0];
+    const value = filter[field];
+    const fieldInfo = FILTER_FIELD_MAP[field];
+    
+    if (!fieldInfo) {
+      return <code className="text-xs bg-muted px-2 py-1 rounded">{JSON.stringify(filter)}</code>;
+    }
+    
+    const displayValue = getFilterDisplayValue(field, value);
+    
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs font-semibold">{fieldInfo.label}</span>
+        <code className="text-xs bg-muted px-2 py-1 rounded">{displayValue}</code>
+      </div>
+    );
   };
 
   // Build filter object from form fields
@@ -367,9 +420,7 @@ export default function MetricsManager() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      {JSON.stringify(metric.filter)}
-                    </code>
+                    {renderFilterDisplay(metric.filter)}
                   </TableCell>
                   <TableCell>{metric.displayOrder ?? "-"}</TableCell>
                   <TableCell>
