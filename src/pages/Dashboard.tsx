@@ -60,6 +60,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { UserSelector } from "@/components/client/UserSelector";
 
 interface FilterOptions {
   countries?: string[];
@@ -1048,18 +1049,12 @@ export default function Dashboard() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="assignee">Usuario</Label>
-              <Select value={selectedAssigneeId} onValueChange={setSelectedAssigneeId}>
-                <SelectTrigger id="assignee">
-                  <SelectValue placeholder="Selecciona un usuario" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filterOptions.assignedUsers?.map((user) => (
-                    <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <UserSelector
+                value={selectedAssigneeId}
+                onValueChange={setSelectedAssigneeId}
+                token={token}
+                disabled={isProcessing}
+              />
             </div>
           </div>
           <DialogFooter>
