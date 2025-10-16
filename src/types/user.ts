@@ -10,7 +10,7 @@ export interface User {
   roleId: number;
   role: Role;
   groupId?: number | null;
-  teamLeaderId?: string | null;
+  teamLeaderId?: number | null;
 }
 
 export interface Role {

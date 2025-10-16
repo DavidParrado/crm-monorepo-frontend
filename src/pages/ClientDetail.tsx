@@ -41,6 +41,7 @@ export default function ClientDetail() {
 
         const data = await response.json();
         setClient(data);
+        console.log('Cliente cargado:', data);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Error al cargar el cliente');
         navigate('/');
@@ -199,15 +200,16 @@ export default function ClientDetail() {
   const isTeamLeader = user?.role?.name === 'TeamLeader';
   const isAgent = user?.role?.name === 'Agent';
   const isAssignedToCurrentUser = client?.assignedToUserId === user?.id;
-  const isAssignedToTeamMember = isTeamLeader && client?.assignedTo?.teamLeaderId === user?.id?.toString();
+  const isAssignedToTeamMember = isTeamLeader && client?.assignedTo?.teamLeaderId === user?.id;
 
+  console.log({ client, user, isAssignedToCurrentUser, isAssignedToTeamMember });
   const statusName = client?.status?.name;
   const canProposeConversion = statusName === 'Asignado' && (isAgent || isTeamLeader || isAdmin);
   const canConfirmConversion = statusName === 'Pendiente de Verificación' && isAdmin;
   const canRejectConversion = statusName === 'Pendiente de Verificación' && isAdmin;
   const canCancelProposal = statusName === 'Pendiente de Verificación' && (
-    isAdmin || 
-    (isAgent && isAssignedToCurrentUser) || 
+    isAdmin ||
+    (isAgent && isAssignedToCurrentUser) ||
     (isTeamLeader && isAssignedToTeamMember)
   );
 
