@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Form,
   FormControl,
@@ -249,7 +248,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Crear Nuevo Usuario</DialogTitle>
           <DialogDescription>
@@ -262,9 +261,8 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
             <div className="text-sm text-muted-foreground">Cargando formulario...</div>
           </div>
         ) : (
-          <ScrollArea className="max-h-[calc(90vh-120px)] pr-4">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
               control={form.control}
               name="firstName"
@@ -440,22 +438,21 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
               </>
             )}
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={loading}
-                >
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Creando..." : "Crear Usuario"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-          </ScrollArea>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={loading}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creando..." : "Crear Usuario"}
+              </Button>
+            </div>
+          </form>
+        </Form>
         )}
       </DialogContent>
     </Dialog>
