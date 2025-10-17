@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { CheckCheck, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export function NotificationPanel() {
   const navigate = useNavigate();
@@ -101,9 +103,8 @@ export function NotificationPanel() {
                       {notification.message}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(notification.createdAt).toLocaleString('es-ES', {
-                        dateStyle: 'short',
-                        timeStyle: 'short',
+                      {format(new Date(notification.createdAt), "PPp", {
+                        locale: es,
                       })}
                     </p>
                   </div>

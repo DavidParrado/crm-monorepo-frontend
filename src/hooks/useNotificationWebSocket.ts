@@ -3,6 +3,8 @@ import { io, Socket } from 'socket.io-client';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Notification } from '@/types/notification';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const WS_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '').replace('http', 'ws') || 'ws://localhost:3001';
 
@@ -12,10 +14,12 @@ export const useNotificationWebSocket = (token: string | null) => {
 
   useEffect(() => {
     if (!token) {
+      console.log('❌ No token available, WebSocket not connecting');
       return;
     }
 
-    console.log('Connecting to WebSocket server:', WS_URL);
+    console.log('🔌 Connecting to WebSocket server:', WS_URL);
+    console.log('🔑 Using token:', token?.substring(0, 20) + '...');
 
     // Establecer conexión con autenticación
     const socket = io(WS_URL, {
@@ -39,28 +43,31 @@ export const useNotificationWebSocket = (token: string | null) => {
     });
 
     socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
+      console.error('❌ Connection error:', error);
     });
 
     // Escuchar evento de nuevas notificaciones
     socket.on('new_notification', (notification: Notification) => {
       console.log('🔔 New notification received:', notification);
+      console.log('📊 Current unread count before:', useNotificationStore.getState().unreadCount);
       
       // Agregar al store
       addNotification(notification);
       
+      console.log('📊 Current unread count after:', useNotificationStore.getState().unreadCount);
+      
       // Mostrar toast
+      console.log('🍞 Showing toast for notification:', notification.message);
       toast(notification.message, {
-        description: new Date(notification.createdAt).toLocaleString('es-ES', {
-          dateStyle: 'short',
-          timeStyle: 'short',
+        description: format(new Date(notification.createdAt), "PPp", {
+          locale: es,
         }),
         duration: 5000,
       });
     });
 
     return () => {
-      console.log('Cleaning up WebSocket connection');
+      console.log('🧹 Cleaning up WebSocket connection');
       socket.disconnect();
     };
   }, [token, addNotification]);
