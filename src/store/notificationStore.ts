@@ -51,6 +51,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       }
 
       const data = await response.json();
+      console.log('📨 Fetched notifications from API:', data);
+      if (data.length > 0) {
+        console.log('📅 First notification createdAt:', data[0].createdAt);
+        console.log('📅 First notification as Date:', new Date(data[0].createdAt));
+        console.log('📅 First notification ISO:', new Date(data[0].createdAt).toISOString());
+        console.log('📅 First notification local:', new Date(data[0].createdAt).toLocaleString());
+      }
       get().setNotifications(data);
     } catch (error) {
       console.error('Error fetching notifications:', error);

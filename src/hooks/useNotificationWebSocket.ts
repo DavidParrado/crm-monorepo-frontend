@@ -49,6 +49,10 @@ export const useNotificationWebSocket = (token: string | null) => {
     // Escuchar evento de nuevas notificaciones
     socket.on('new_notification', (notification: Notification) => {
       console.log('🔔 New notification received:', notification);
+      console.log('📅 Original createdAt from backend:', notification.createdAt);
+      console.log('📅 Date object created:', new Date(notification.createdAt));
+      console.log('📅 Date object ISO string:', new Date(notification.createdAt).toISOString());
+      console.log('📅 Date object local string:', new Date(notification.createdAt).toLocaleString());
       console.log('📊 Current unread count before:', useNotificationStore.getState().unreadCount);
       
       // Agregar al store
@@ -58,10 +62,11 @@ export const useNotificationWebSocket = (token: string | null) => {
       
       // Mostrar toast
       console.log('🍞 Showing toast for notification:', notification.message);
+      const formattedDate = format(new Date(notification.createdAt), "PPp", { locale: es });
+      console.log('📅 Formatted date for toast:', formattedDate);
+      
       toast(notification.message, {
-        description: format(new Date(notification.createdAt), "PPp", {
-          locale: es,
-        }),
+        description: formattedDate,
         duration: 5000,
       });
     });

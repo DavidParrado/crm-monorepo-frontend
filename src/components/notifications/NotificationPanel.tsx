@@ -21,11 +21,7 @@ export function NotificationPanel() {
     markAllAsRead 
   } = useNotificationStore();
 
-  useEffect(() => {
-    if (token) {
-      fetchNotifications(token);
-    }
-  }, [token, fetchNotifications]);
+  // Las notificaciones ya se cargan en MainLayout, solo las mostramos aquí
 
   const handleNotificationClick = async (id: number, link: string | null) => {
     if (token) {

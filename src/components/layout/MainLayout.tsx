@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
+import { useNotificationStore } from "@/store/notificationStore";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function MainLayout() {
@@ -12,8 +13,17 @@ export function MainLayout() {
   const { isAuthenticated, checkAuth, token } = useAuthStore();
   const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
   
+  const { fetchNotifications } = useNotificationStore();
+  
   // Establecer conexión WebSocket para notificaciones
   useNotificationWebSocket(token);
+
+  // Cargar notificaciones al iniciar la aplicación
+  useEffect(() => {
+    if (token) {
+      fetchNotifications(token);
+    }
+  }, [token, fetchNotifications]);
 
 
   const runAuthCheck = useCallback(async () => {
