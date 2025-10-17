@@ -3,12 +3,17 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuthStore } from "@/store/authStore";
+import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function MainLayout() {
   const navigate = useNavigate();
   // Al recargar, isLoading es TRUE (ver authStore.ts)
-  const { isAuthenticated, checkAuth } = useAuthStore();
+  const { isAuthenticated, checkAuth, token } = useAuthStore();
   const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
+  
+  // Establecer conexión WebSocket para notificaciones
+  useNotificationWebSocket(token);
 
 
   const runAuthCheck = useCallback(async () => {
@@ -47,8 +52,9 @@ export function MainLayout() {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="flex h-14 items-center gap-4 px-4">
+            <div className="flex h-14 items-center justify-between gap-4 px-4">
               <SidebarTrigger />
+              <NotificationBell />
             </div>
           </header>
           <main className="flex-1 p-6">
