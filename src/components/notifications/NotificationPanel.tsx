@@ -1,11 +1,10 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { CheckCheck, Clock } from "lucide-react";
+import { CheckCheck, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -70,8 +69,9 @@ export function NotificationPanel() {
             <p className="text-sm">No tienes notificaciones</p>
           </div>
         ) : (
-          <div className="divide-y">
-            {notifications.map((notification) => (
+          <>
+            <div className="divide-y">
+              {notifications.slice(0, 5).map((notification) => (
               <button
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.id, notification.link)}
@@ -111,6 +111,21 @@ export function NotificationPanel() {
               </button>
             ))}
           </div>
+          
+          {notifications.length > 5 && (
+            <>
+              <Separator />
+              <div className="p-4">
+                <Link to="/notifications">
+                  <Button variant="outline" className="w-full">
+                    Ver Todas las Notificaciones
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          )}
+        </>
         )}
       </ScrollArea>
     </div>

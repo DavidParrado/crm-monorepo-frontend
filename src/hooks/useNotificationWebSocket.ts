@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-const WS_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '').replace('http', 'ws') || 'ws://localhost:3001';
+const WS_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '').replace('http', 'ws') || 'ws://localhost:4000';
 
 export const useNotificationWebSocket = (token: string | null) => {
   const socketRef = useRef<Socket | null>(null);

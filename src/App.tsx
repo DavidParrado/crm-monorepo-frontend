@@ -7,6 +7,8 @@ import { MainLayout } from "./components/layout/MainLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
+import AppointmentDetail from "./pages/AppointmentDetail";
+import Notifications from "./pages/Notifications";
 import ClientDetail from "./pages/ClientDetail";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients/:id" element={<ClientDetail />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/appointments/:id" element={<AppointmentDetail />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />

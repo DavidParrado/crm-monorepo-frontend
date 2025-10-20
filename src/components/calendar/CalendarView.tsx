@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Calendar, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Appointment } from "@/types/appointment";
@@ -20,29 +30,47 @@ import DeleteAppointmentDialog from "./DeleteAppointmentDialog";
 import { API_URL } from "@/lib/constants";
 import { useAuthStore } from "@/store/authStore";
 
+interface PaginatedResponse {
+  data: Appointment[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 export default function CalendarView() {
   const { token } = useAuthStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const { toast } = useToast();
+
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "12", 10);
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [page, limit]);
 
   const fetchAppointments = async () => {
     try {
-      const response = await fetch(`${API_URL}/appointments`, {
+      const response = await fetch(`${API_URL}/appointments?page=${page}&limit=${limit}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Error al cargar citas");
-      const data = await response.json();
+      const data: PaginatedResponse = await response.json();
       console.log(data);
-      setAppointments(data);
+      setAppointments(data.data);
+      setTotalPages(data.meta.totalPages);
+      setTotal(data.meta.total);
     } catch (error) {
       toast({
         title: "Error",
@@ -52,6 +80,10 @@ export default function CalendarView() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setSearchParams({ page: newPage.toString(), limit: limit.toString() });
   };
 
   const handleEdit = (appointment: Appointment) => {
@@ -119,7 +151,14 @@ export default function CalendarView() {
                     <TableCell className="font-medium">
                       {appointment?.userName || `Usuario #${appointment?.userId}`}
                     </TableCell>
-                    <TableCell>{appointment.title}</TableCell>
+                    <TableCell>
+                      <Link 
+                        to={`/appointments/${appointment.id}`}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        {appointment.title}
+                      </Link>
+                    </TableCell>
                     <TableCell className="max-w-xs truncate">
                       {appointment.description || "-"}
                     </TableCell>
@@ -161,6 +200,56 @@ export default function CalendarView() {
                 ))}
               </TableBody>
             </Table>
+          )}
+          
+          {totalPages > 1 && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => page > 1 && handlePageChange(page - 1)}
+                      className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                    // Show first page, last page, current page, and pages around current
+                    if (
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
+                      (pageNum >= page - 1 && pageNum <= page + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            onClick={() => handlePageChange(pageNum)}
+                            isActive={pageNum === page}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (pageNum === page - 2 || pageNum === page + 2) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => page < totalPages && handlePageChange(page + 1)}
+                      className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </CardContent>
       </Card>
