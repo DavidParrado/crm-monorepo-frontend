@@ -34,32 +34,61 @@ import { Bell, Trash2, CheckCheck, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { useNotificationStore } from "@/store/notificationStore";
 import { Notification } from "@/types/notification";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 
 export default function Notifications() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuthStore();
   const { toast } = useToast();
-  const { notifications, fetchNotifications } = useNotificationStore();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<number | null>(null);
   
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
-  useEffect(() => {
-    if (token) {
-      fetchNotifications(token);
+  const fetchNotifications = async () => {
+    if (!token) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `${API_URL}/notifications?page=${currentPage}&limit=${ITEMS_PER_PAGE}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error('Error al obtener notificaciones');
+
+      const data = await response.json();
+      setNotifications(data.notifications || data);
+      setTotalCount(data.total || data.length);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las notificaciones",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  }, [token]);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [token, currentPage]);
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.isRead && token) {
@@ -70,7 +99,7 @@ export default function Notifications() {
             'Authorization': `Bearer ${token}`,
           },
         });
-        fetchNotifications(token);
+        fetchNotifications();
       } catch (error) {
         console.error('Error marking notification as read:', error);
       }
@@ -100,7 +129,7 @@ export default function Notifications() {
         description: "La notificación ha sido eliminada exitosamente",
       });
 
-      fetchNotifications(token);
+      fetchNotifications();
     } catch (error) {
       toast({
         title: "Error",
@@ -133,7 +162,7 @@ export default function Notifications() {
         description: "Todas las notificaciones leídas han sido eliminadas",
       });
 
-      fetchNotifications(token);
+      fetchNotifications();
     } catch (error) {
       toast({
         title: "Error",
@@ -153,10 +182,7 @@ export default function Notifications() {
   const readNotifications = notifications.filter(n => n.isRead);
   const unreadNotifications = notifications.filter(n => !n.isRead);
   
-  const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedNotifications = notifications.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   
   const handlePageChange = (page: number) => {
     setSearchParams({ page: page.toString() });
@@ -278,7 +304,7 @@ export default function Notifications() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedNotifications.map((notification) => (
+                {notifications.map((notification) => (
                   <TableRow 
                     key={notification.id}
                     className={cn(
