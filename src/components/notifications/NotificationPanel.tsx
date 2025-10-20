@@ -112,22 +112,23 @@ export function NotificationPanel() {
             ))}
           </div>
           
-          {notifications.length > 0 && (
-            <>
-              <Separator />
-              <div className="p-4">
-                <Link to="/notifications">
-                  <Button variant="secondary" className="w-full">
-                    Ver Todas las Notificaciones
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-              </div>
-            </>
-          )}
         </>
         )}
       </ScrollArea>
+
+      {notifications.length > 0 && (
+        <>
+          <Separator />
+          <div className="p-4">
+            <Link to="/notifications">
+              <Button variant="secondary" className="w-full">
+                Ver Todas las Notificaciones
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }
