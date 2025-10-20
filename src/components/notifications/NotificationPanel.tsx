@@ -112,7 +112,7 @@ export function NotificationPanel() {
             ))}
           </div>
           
-          {notifications.length > 5 && (
+          {notifications.length > 0 && (
             <>
               <Separator />
               <div className="p-4">
