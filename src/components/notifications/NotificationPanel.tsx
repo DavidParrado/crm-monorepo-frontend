@@ -9,11 +9,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-interface NotificationPanelProps {
-  onClose?: () => void;
-}
-
-export function NotificationPanel({ onClose }: NotificationPanelProps) {
+export function NotificationPanel() {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const { 
@@ -33,7 +29,6 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
     if (link) {
       navigate(link);
     }
-    onClose?.();
   };
 
   const handleMarkAllAsRead = () => {
@@ -67,7 +62,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
         )}
       </div>
 
-      <ScrollArea className="flex-1 max-h-[350px]">
+      <ScrollArea className="flex-1">
         {notifications.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">
             <Bell className="h-12 w-12 mx-auto mb-3 opacity-30" />
@@ -117,23 +112,22 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
             ))}
           </div>
           
+          {notifications.length > 0 && (
+            <>
+              <Separator />
+              <div className="p-4">
+                <Link to="/notifications">
+                  <Button variant="outline" className="w-full">
+                    Ver Todas las Notificaciones
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </>
+          )}
         </>
         )}
       </ScrollArea>
-
-      {notifications.length > 0 && (
-        <>
-          <Separator />
-          <div className="p-4">
-            <Link to="/notifications" onClick={() => onClose?.()}>
-              <Button variant="secondary" className="w-full">
-                Ver Todas las Notificaciones
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </>
-      )}
     </div>
   );
 }
