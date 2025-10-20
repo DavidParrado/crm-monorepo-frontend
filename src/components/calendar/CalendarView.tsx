@@ -67,10 +67,10 @@ export default function CalendarView() {
       });
       if (!response.ok) throw new Error("Error al cargar citas");
       const data: PaginatedResponse = await response.json();
-      console.log(data);
-      setAppointments(data.data);
-      setTotalPages(data.meta.totalPages);
-      setTotal(data.meta.total);
+      console.log('Appointments Response:', data);
+      setAppointments(data?.data || []);
+      setTotalPages(data?.meta?.totalPages || 1);
+      setTotal(data?.meta?.total || 0);
     } catch (error) {
       toast({
         title: "Error",
