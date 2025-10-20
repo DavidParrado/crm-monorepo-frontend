@@ -117,7 +117,7 @@ export function NotificationPanel() {
               <Separator />
               <div className="p-4">
                 <Link to="/notifications">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="secondary" className="w-full">
                     Ver Todas las Notificaciones
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
