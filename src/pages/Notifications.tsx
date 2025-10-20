@@ -12,6 +12,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Bell, Trash2, CheckCheck, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Notification } from "@/types/notification";
@@ -32,14 +41,19 @@ import { es } from "date-fns/locale";
 import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Notifications() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuthStore();
   const { toast } = useToast();
   const { notifications, fetchNotifications } = useNotificationStore();
   const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<number | null>(null);
+  
+  const currentPage = parseInt(searchParams.get("page") || "1", 10);
 
   useEffect(() => {
     if (token) {
@@ -138,6 +152,77 @@ export default function Notifications() {
 
   const readNotifications = notifications.filter(n => n.isRead);
   const unreadNotifications = notifications.filter(n => !n.isRead);
+  
+  const totalPages = Math.ceil(notifications.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedNotifications = notifications.slice(startIndex, endIndex);
+  
+  const handlePageChange = (page: number) => {
+    setSearchParams({ page: page.toString() });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsisStart = currentPage > 3;
+    const showEllipsisEnd = currentPage < totalPages - 2;
+    
+    // Primera página
+    items.push(
+      <PaginationItem key={1}>
+        <PaginationLink
+          onClick={() => handlePageChange(1)}
+          isActive={currentPage === 1}
+        >
+          1
+        </PaginationLink>
+      </PaginationItem>
+    );
+    
+    // Elipsis inicial
+    if (showEllipsisStart) {
+      items.push(<PaginationEllipsis key="ellipsis-start" />);
+    }
+    
+    // Páginas intermedias
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    
+    for (let i = start; i <= end; i++) {
+      items.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            onClick={() => handlePageChange(i)}
+            isActive={currentPage === i}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Elipsis final
+    if (showEllipsisEnd) {
+      items.push(<PaginationEllipsis key="ellipsis-end" />);
+    }
+    
+    // Última página (si hay más de una página)
+    if (totalPages > 1) {
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            onClick={() => handlePageChange(totalPages)}
+            isActive={currentPage === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return items;
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -193,7 +278,7 @@ export default function Notifications() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {notifications.map((notification) => (
+                {paginatedNotifications.map((notification) => (
                   <TableRow 
                     key={notification.id}
                     className={cn(
@@ -256,6 +341,28 @@ export default function Notifications() {
           )}
         </CardContent>
       </Card>
+      
+      {totalPages > 1 && notifications.length > 0 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {renderPaginationItems()}
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

@@ -7,7 +7,11 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export function NotificationPanel() {
+interface NotificationPanelProps {
+  onClose?: () => void;
+}
+
+export function NotificationPanel({ onClose }: NotificationPanelProps) {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const { 
@@ -24,6 +28,7 @@ export function NotificationPanel() {
     if (token) {
       await markAsRead(id, token);
     }
+    onClose?.();
     if (link) {
       navigate(link);
     }
@@ -110,7 +115,11 @@ export function NotificationPanel() {
           </div>
           
           {notifications.length > 0 && (
-            <Link to="/notifications" className="block border-t bg-background">
+            <Link 
+              to="/notifications" 
+              className="block border-t bg-background"
+              onClick={() => onClose?.()}
+            >
               <button className="w-full p-4 text-sm font-medium hover:bg-accent/50 transition-colors flex items-center justify-center gap-2">
                 Ver Todas las Notificaciones
                 <ArrowRight className="h-4 w-4" />

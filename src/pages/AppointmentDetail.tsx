@@ -199,17 +199,17 @@ export default function AppointmentDetail() {
             <div>
               <p className="text-muted-foreground">Creada el</p>
               <p>
-                {format(new Date(appointment.createdAt), "PPp", {
+                {appointment.createdAt ? format(new Date(appointment.createdAt), "PPp", {
                   locale: es,
-                })}
+                }) : 'N/A'}
               </p>
             </div>
             <div>
               <p className="text-muted-foreground">Última actualización</p>
               <p>
-                {format(new Date(appointment.updatedAt), "PPp", {
+                {appointment.updatedAt ? format(new Date(appointment.updatedAt), "PPp", {
                   locale: es,
-                })}
+                }) : 'N/A'}
               </p>
             </div>
           </div>
