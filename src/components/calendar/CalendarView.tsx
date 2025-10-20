@@ -32,12 +32,7 @@ import { useAuthStore } from "@/store/authStore";
 
 interface PaginatedResponse {
   data: Appointment[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  total: number;
 }
 
 export default function CalendarView() {
@@ -69,8 +64,8 @@ export default function CalendarView() {
       const data: PaginatedResponse = await response.json();
       console.log('Appointments Response:', data);
       setAppointments(data?.data || []);
-      setTotalPages(data?.meta?.totalPages || 1);
-      setTotal(data?.meta?.total || 0);
+      setTotal(data?.total || 0);
+      setTotalPages(Math.ceil((data?.total || 0) / limit));
     } catch (error) {
       toast({
         title: "Error",

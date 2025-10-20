@@ -72,7 +72,7 @@ export default function Notifications() {
       if (!response.ok) throw new Error('Error al obtener notificaciones');
 
       const data = await response.json();
-      setNotifications(data.notifications || data);
+      setNotifications(data.data || data);
       setTotalCount(data.total || data.length);
     } catch (error) {
       console.error('Error fetching notifications:', error);
