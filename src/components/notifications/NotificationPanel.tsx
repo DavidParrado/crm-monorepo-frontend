@@ -2,8 +2,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { CheckCheck, Clock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -46,8 +44,8 @@ export function NotificationPanel() {
   }
 
   return (
-    <div className="flex flex-col max-h-[500px]">
-      <div className="flex items-center justify-between p-4 border-b">
+    <div className="flex flex-col max-h-[calc(100vh-200px)] lg:max-h-[600px]">
+      <div className="flex items-center justify-between p-4 border-b bg-background">
         <h3 className="font-semibold text-base">Notificaciones</h3>
         {notifications.some((n) => !n.isRead) && (
           <Button
@@ -62,16 +60,15 @@ export function NotificationPanel() {
         )}
       </div>
 
-      <ScrollArea className="flex-1">
-        {notifications.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <Bell className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No tienes notificaciones</p>
-          </div>
-        ) : (
-          <>
-            <div className="divide-y">
-              {notifications.slice(0, 5).map((notification) => (
+      {notifications.length === 0 ? (
+        <div className="p-8 text-center text-muted-foreground">
+          <Bell className="h-12 w-12 mx-auto mb-3 opacity-30" />
+          <p className="text-sm">No tienes notificaciones</p>
+        </div>
+      ) : (
+        <>
+          <div className="divide-y overflow-y-auto flex-1">
+            {notifications.slice(0, 5).map((notification) => (
               <button
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification.id, notification.link)}
@@ -113,21 +110,15 @@ export function NotificationPanel() {
           </div>
           
           {notifications.length > 0 && (
-            <>
-              <Separator />
-              <div className="p-4">
-                <Link to="/notifications">
-                  <Button variant="outline" className="w-full">
-                    Ver Todas las Notificaciones
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-              </div>
-            </>
+            <Link to="/notifications" className="block border-t bg-background">
+              <button className="w-full p-4 text-sm font-medium hover:bg-accent/50 transition-colors flex items-center justify-center gap-2">
+                Ver Todas las Notificaciones
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </Link>
           )}
         </>
-        )}
-      </ScrollArea>
+      )}
     </div>
   );
 }
