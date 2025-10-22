@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -30,15 +29,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Bell, Trash2, CheckCheck, Clock } from "lucide-react";
+import { Bell, Trash2, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Notification } from "@/types/notification";
+import { AppNotification } from "@/types/notification";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { formatNotification, getNotificationTypeLabel } from "@/utils/notificationFormatter";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -47,7 +47,7 @@ export default function Notifications() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { token } = useAuthStore();
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -90,7 +90,7 @@ export default function Notifications() {
     fetchNotifications();
   }, [token, currentPage]);
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = async (notification: AppNotification) => {
     if (!notification.isRead && token) {
       try {
         await fetch(`${API_URL}/notifications/${notification.id}/read`, {
@@ -304,64 +304,87 @@ export default function Notifications() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {notifications.map((notification) => (
-                  <TableRow 
-                    key={notification.id}
-                    className={cn(
-                      "cursor-pointer hover:bg-accent/50",
-                      !notification.isRead && "bg-accent/30"
-                    )}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <TableCell>
-                      <div className={cn(
-                        "p-2 rounded-full w-fit",
-                        notification.type === 'REMINDER' ? "bg-primary/10" : "bg-success/10"
-                      )}>
-                        {notification.type === 'REMINDER' ? (
-                          <Clock className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Bell className="h-4 w-4 text-success" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className={cn(
-                      !notification.isRead && "font-medium"
-                    )}>
-                      {notification.message}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={notification.type === 'REMINDER' ? 'default' : 'secondary'}>
-                        {notification.type === 'REMINDER' ? 'Recordatorio' : 'Transaccional'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {format(new Date(notification.createdAt), "PPp", {
-                        locale: es,
-                      })}
-                    </TableCell>
-                    <TableCell>
-                      {!notification.isRead ? (
-                        <Badge variant="default">No leída</Badge>
-                      ) : (
-                        <Badge variant="outline">Leída</Badge>
+                {notifications.map((notification) => {
+                  const formatted = formatNotification(notification);
+                  
+                  const IconComponent = 
+                    formatted.icon === 'reminder' ? Clock :
+                    formatted.icon === 'success' ? CheckCircle :
+                    formatted.icon === 'warning' ? AlertCircle :
+                    Info;
+                  
+                  const iconBgColor = 
+                    formatted.icon === 'reminder' ? "bg-primary/10" :
+                    formatted.icon === 'success' ? "bg-success/10" :
+                    formatted.icon === 'warning' ? "bg-warning/10" :
+                    "bg-info/10";
+                  
+                  const iconColor = 
+                    formatted.icon === 'reminder' ? "text-primary" :
+                    formatted.icon === 'success' ? "text-success" :
+                    formatted.icon === 'warning' ? "text-warning" :
+                    "text-info";
+                  
+                  return (
+                    <TableRow 
+                      key={notification.id}
+                      className={cn(
+                        "cursor-pointer hover:bg-accent/50",
+                        !notification.isRead && "bg-accent/30"
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          confirmDelete(notification.id);
-                        }}
-                        disabled={loading}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <TableCell>
+                        <div className={cn("p-2 rounded-full w-fit", iconBgColor)}>
+                          <IconComponent className={cn("h-4 w-4", iconColor)} />
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className={cn(
+                            "text-sm font-medium",
+                            !notification.isRead && "font-semibold"
+                          )}>
+                            {formatted.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatted.description}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {getNotificationTypeLabel(notification.type)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {format(new Date(notification.createdAt), "PPp", {
+                          locale: es,
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {!notification.isRead ? (
+                          <Badge variant="default">No leída</Badge>
+                        ) : (
+                          <Badge variant="outline">Leída</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDelete(notification.id);
+                          }}
+                          disabled={loading}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

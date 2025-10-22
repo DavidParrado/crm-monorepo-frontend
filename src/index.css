@@ -33,9 +33,15 @@ All colors MUST be HSL.
     --accent: 220 14% 96%;
     --accent-foreground: 224 9% 13%;
 
-    /* Estados - Verde para éxito, Rojo para peligro */
+    /* Estados - Verde para éxito, Rojo para peligro, Amarillo para advertencia, Azul para info */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -88,6 +94,12 @@ All colors MUST be HSL.
 
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;

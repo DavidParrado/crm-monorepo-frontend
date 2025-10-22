@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useNotificationStore } from '@/store/notificationStore';
-import { Notification } from '@/types/notification';
+import { AppNotification } from '@/types/notification';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatNotification } from '@/utils/notificationFormatter';
 
 const WS_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '').replace('http', 'ws') || 'ws://localhost:4000';
 
@@ -47,26 +48,18 @@ export const useNotificationWebSocket = (token: string | null) => {
     });
 
     // Escuchar evento de nuevas notificaciones
-    socket.on('new_notification', (notification: Notification) => {
+    socket.on('new_notification', (notification: AppNotification) => {
       console.log('🔔 New notification received:', notification);
-      console.log('📅 Original createdAt from backend:', notification.createdAt);
-      console.log('📅 Date object created:', new Date(notification.createdAt));
-      console.log('📅 Date object ISO string:', new Date(notification.createdAt).toISOString());
-      console.log('📅 Date object local string:', new Date(notification.createdAt).toLocaleString());
-      console.log('📊 Current unread count before:', useNotificationStore.getState().unreadCount);
       
       // Agregar al store
       addNotification(notification);
       
-      console.log('📊 Current unread count after:', useNotificationStore.getState().unreadCount);
-      
-      // Mostrar toast
-      console.log('🍞 Showing toast for notification:', notification.message);
+      // Formatear y mostrar toast
+      const formatted = formatNotification(notification);
       const formattedDate = format(new Date(notification.createdAt), "PPp", { locale: es });
-      console.log('📅 Formatted date for toast:', formattedDate);
       
-      toast(notification.message, {
-        description: formattedDate,
+      toast(formatted.title, {
+        description: `${formatted.description}\n${formattedDate}`,
         duration: 5000,
       });
     });

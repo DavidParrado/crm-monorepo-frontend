@@ -2,10 +2,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
-import { CheckCheck, Clock, ArrowRight } from "lucide-react";
+import { CheckCheck, Clock, ArrowRight, Bell as BellIcon, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { formatNotification } from "@/utils/notificationFormatter";
 
 interface NotificationPanelProps {
   onClose?: () => void;
@@ -73,45 +74,63 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
       ) : (
         <>
           <div className="divide-y overflow-y-auto flex-1">
-            {notifications.slice(0, 5).map((notification) => (
-              <button
-                key={notification.id}
-                onClick={() => handleNotificationClick(notification.id, notification.link)}
-                className={cn(
-                  "w-full text-left p-4 hover:bg-accent/50 transition-colors",
-                  !notification.isRead && "bg-accent/30"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "mt-1 p-1.5 rounded-full",
-                    notification.type === 'REMINDER' ? "bg-primary/10" : "bg-success/10"
-                  )}>
-                    {notification.type === 'REMINDER' ? (
-                      <Clock className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Bell className="h-4 w-4 text-success" />
+            {notifications.slice(0, 5).map((notification) => {
+              const formatted = formatNotification(notification);
+              
+              const IconComponent = 
+                formatted.icon === 'reminder' ? Clock :
+                formatted.icon === 'success' ? CheckCircle :
+                formatted.icon === 'warning' ? AlertCircle :
+                Info;
+              
+              const iconBgColor = 
+                formatted.icon === 'reminder' ? "bg-primary/10" :
+                formatted.icon === 'success' ? "bg-success/10" :
+                formatted.icon === 'warning' ? "bg-warning/10" :
+                "bg-info/10";
+              
+              const iconColor = 
+                formatted.icon === 'reminder' ? "text-primary" :
+                formatted.icon === 'success' ? "text-success" :
+                formatted.icon === 'warning' ? "text-warning" :
+                "text-info";
+              
+              return (
+                <button
+                  key={notification.id}
+                  onClick={() => handleNotificationClick(notification.id, notification.link)}
+                  className={cn(
+                    "w-full text-left p-4 hover:bg-accent/50 transition-colors",
+                    !notification.isRead && "bg-accent/30"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={cn("mt-1 p-1.5 rounded-full", iconBgColor)}>
+                      <IconComponent className={cn("h-4 w-4", iconColor)} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-sm font-medium mb-1",
+                        !notification.isRead && "font-semibold"
+                      )}>
+                        {formatted.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatted.description}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(notification.createdAt), "PPp", {
+                          locale: es,
+                        })}
+                      </p>
+                    </div>
+                    {!notification.isRead && (
+                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
                     )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-sm",
-                      !notification.isRead && "font-medium"
-                    )}>
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {format(new Date(notification.createdAt), "PPp", {
-                        locale: es,
-                      })}
-                    </p>
-                  </div>
-                  {!notification.isRead && (
-                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                  )}
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
           
           {notifications.length > 0 && (

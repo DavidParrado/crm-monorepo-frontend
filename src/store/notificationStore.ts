@@ -1,13 +1,13 @@
 import { create } from 'zustand';
-import { Notification } from '@/types/notification';
+import { AppNotification } from '@/types/notification';
 import { API_URL } from '@/lib/constants';
 
 interface NotificationState {
-  notifications: Notification[];
+  notifications: AppNotification[];
   unreadCount: number;
   isLoading: boolean;
-  addNotification: (notification: Notification) => void;
-  setNotifications: (notifications: Notification[]) => void;
+  addNotification: (notification: AppNotification) => void;
+  setNotifications: (notifications: AppNotification[]) => void;
   markAsRead: (id: number, token: string) => Promise<void>;
   markAllAsRead: (token: string) => Promise<void>;
   fetchNotifications: (token: string) => Promise<void>;
