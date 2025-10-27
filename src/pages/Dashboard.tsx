@@ -1,65 +1,25 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Users, Eye, Filter, Trash2 } from "lucide-react";
-import { DynamicIcon } from "@/components/ui/dynamic-icon";
+import { Filter } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { RoleEnum } from "@/types/role";
-import { Client } from "@/types/client";
 import { toast } from "sonner";
 import { useClients } from "@/hooks/useClients";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useClientFilters } from "@/hooks/useClientFilters";
 import * as clientService from "@/services/clientService";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Label } from "@/components/ui/label";
-import { UserSelector } from "@/components/client/UserSelector";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { ClientFilters } from "@/components/dashboard/ClientFilters";
+import { ClientTable } from "@/components/dashboard/ClientTable";
+import { ClientTableActions } from "@/components/dashboard/ClientTableActions";
+import { ClientPagination } from "@/components/dashboard/ClientPagination";
+import { AssignClientDialog } from "@/components/dashboard/AssignClientDialog";
+import { DeleteClientDialog } from "@/components/dashboard/DeleteClientDialog";
+import { BulkDeleteDialog } from "@/components/dashboard/BulkDeleteDialog";
 
 
 export default function Dashboard() {
@@ -267,47 +227,11 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards - Dynamic rendering */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoadingStats ? (
-          // Loading skeletons
-          [...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-4 w-24 mb-4" />
-                <Skeleton className="h-8 w-16" />
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          stats.map((stat) => (
-            <Card
-              key={stat.key}
-              className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
-              onClick={() => handleStatClick(stat.filterCriteria)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {stat.name}
-                    </p>
-                    <h3 className="text-3xl font-bold mt-2">
-                      {stat.count}
-                    </h3>
-                  </div>
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    {stat.icon ? (
-                      <DynamicIcon name={stat.icon} className="h-6 w-6 text-primary" />
-                    ) : (
-                      <Users className="h-6 w-6 text-primary" />
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <DashboardStats 
+        stats={stats} 
+        isLoading={isLoadingStats} 
+        onStatClick={handleStatClick} 
+      />
 
       {/* Tabla de Clientes */}
       <Card>
@@ -349,486 +273,99 @@ export default function Dashboard() {
 
           {/* Filters Panel */}
           {showFilters && (
-            <div className="mt-4 p-4 border rounded-lg bg-muted/30 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Country Filter */}
-                {filterOptions.countries && filterOptions.countries.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">País</label>
-                    <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos los países" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {filterOptions.countries.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Campaign Filter */}
-                {filterOptions.campaigns && filterOptions.campaigns.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Campaña</label>
-                    <Select value={selectedCampaign} onValueChange={setSelectedCampaign}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas las campañas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        {filterOptions.campaigns.map((campaign) => (
-                          <SelectItem key={campaign} value={campaign}>
-                            {campaign}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Status Filter */}
-                {filterOptions.statuses && filterOptions.statuses.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Estado</label>
-                    <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos los estados" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {filterOptions.statuses.map((status) => (
-                          <SelectItem key={status.id} value={status.id.toString()}>
-                            {status.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* User Filter - Only for Admin and TeamLeader */}
-                {canFilterByUser && filterOptions.assignedUsers && filterOptions.assignedUsers.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Asignado a</label>
-                    <Select value={selectedUser} onValueChange={setSelectedUser}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos los usuarios" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {filterOptions.assignedUsers.map((user) => (
-                          <SelectItem key={user.id} value={user.id.toString()}>
-                            {user.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Group Filter - Only for Admin */}
-                {canFilterByGroup && filterOptions.groups && filterOptions.groups.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Grupo</label>
-                    <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos los grupos" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {filterOptions.groups.map((group) => (
-                          <SelectItem key={group.id} value={group.id.toString()}>
-                            {group.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Management Filter */}
-                {filterOptions.managements && filterOptions.managements.length > 0 && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Última Gestión</label>
-                    <Select value={selectedManagement} onValueChange={setSelectedManagement}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todas las gestiones" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        {filterOptions.managements.map((management) => (
-                          <SelectItem key={management.id} value={management.id.toString()}>
-                            {management.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {hasActiveFilters && (
-                <div className="flex justify-end">
-                  <Button variant="outline" size="sm" onClick={clearFilters}>
-                    Limpiar filtros
-                  </Button>
-                </div>
-              )}
-            </div>
+            <ClientFilters
+              filterOptions={filterOptions}
+              selectedCountry={selectedCountry}
+              selectedCampaign={selectedCampaign}
+              selectedStatus={selectedStatus}
+              selectedUser={selectedUser}
+              selectedGroup={selectedGroup}
+              selectedManagement={selectedManagement}
+              canFilterByUser={canFilterByUser}
+              canFilterByGroup={canFilterByGroup}
+              hasActiveFilters={hasActiveFilters}
+              onCountryChange={setSelectedCountry}
+              onCampaignChange={setSelectedCampaign}
+              onStatusChange={setSelectedStatus}
+              onUserChange={setSelectedUser}
+              onGroupChange={setSelectedGroup}
+              onManagementChange={setSelectedManagement}
+              onClearFilters={clearFilters}
+            />
           )}
         </CardHeader>
         <CardContent>
           {/* Acciones masivas */}
-          {isAdmin && selectedRows.length > 0 && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
-              <span className="text-sm font-medium">
-                {selectedRows.length} seleccionado{selectedRows.length > 1 ? "s" : ""}
-              </span>
-              <div className="flex gap-2 ml-auto">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => setShowAssignDialog(true)}
-                  disabled={isProcessing}
-                >
-                  Asignar
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={handleBulkUnassign}
-                  disabled={isProcessing}
-                >
-                  Desasignar
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={handleExport}
-                  disabled={isProcessing}
-                >
-                  Exportar
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => setShowBulkDeleteDialog(true)}
-                  disabled={isProcessing}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Eliminar
-                </Button>
-              </div>
-            </div>
+          {isAdmin && (
+            <ClientTableActions
+              selectedCount={selectedRows.length}
+              isProcessing={isProcessing}
+              onAssign={() => setShowAssignDialog(true)}
+              onUnassign={handleBulkUnassign}
+              onExport={handleExport}
+              onDelete={() => setShowBulkDeleteDialog(true)}
+            />
           )}
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={clients.length > 0 && selectedRows.length === clients.length}
-                      onCheckedChange={handleSelectAll}
-                      disabled={isLoading || clients.length === 0}
-                    />
-                  </TableHead>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Teléfono</TableHead>
-                  <TableHead>País</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Asignado a</TableHead>
-                  <TableHead className="text-right w-[200px]">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  // Loading skeleton
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell><Skeleton className="h-4 w-4" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-40" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-28" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                    </TableRow>
-                  ))
-                ) : clients.length === 0 ? (
-                  // Empty state
-                  <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center">
-                      <div className="flex flex-col items-center justify-center text-muted-foreground">
-                        <Users className="h-12 w-12 mb-2 opacity-50" />
-                        <p className="text-lg font-medium">No se encontraron clientes</p>
-                        <p className="text-sm">
-                          {hasActiveFilters || debouncedSearch
-                            ? "Intenta ajustar los filtros o la búsqueda"
-                            : "Aún no hay clientes registrados"}
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  // Client rows
-                  clients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedRows.includes(client.id)}
-                          onCheckedChange={(checked) =>
-                            handleSelectRow(client.id, checked as boolean)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {client.firstName} {client.lastName}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {client.email}
-                      </TableCell>
-                      <TableCell>{client.phone}</TableCell>
-                      <TableCell>{client.country}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {client.status?.name || "Sin estado"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {client.assignedTo
-                          ? `${client.assignedTo.firstName} ${client.assignedTo.lastName || ""}`
-                          : "Sin asignar"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/clients/${client.id}`)}
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            Ver detalle
-                          </Button>
-                          {isAdmin && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setDeleteClientId(client.id);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <ClientTable
+            clients={clients}
+            isLoading={isLoading}
+            selectedRows={selectedRows}
+            hasActiveFilters={hasActiveFilters}
+            debouncedSearch={debouncedSearch}
+            isAdmin={isAdmin}
+            onSelectAll={handleSelectAll}
+            onSelectRow={handleSelectRow}
+            onViewDetail={(clientId) => navigate(`/clients/${clientId}`)}
+            onDelete={(clientId) => {
+              setDeleteClientId(clientId);
+              setShowDeleteDialog(true);
+            }}
+          />
 
           {/* Paginación */}
           {!isLoading && clients.length > 0 && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Filas por página:</span>
-                  <Select
-                    value={limit.toString()}
-                    onValueChange={(value) => {
-                      setLimit(Number(value));
-                      setCurrentPage(1);
-                    }}
-                  >
-                    <SelectTrigger className="w-[70px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Mostrando {(currentPage - 1) * limit + 1}-
-                  {Math.min(currentPage * limit, total)} de {total} resultados
-                </p>
-              </div>
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-
-                  {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                    const pageNum = i + 1;
-                    return (
-                      <PaginationItem key={pageNum}>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(pageNum)}
-                          isActive={currentPage === pageNum}
-                          className="cursor-pointer"
-                        >
-                          {pageNum}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  })}
-
-                  {totalPages > 5 && (
-                    <>
-                      <PaginationItem>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                      <PaginationItem>
-                        <PaginationLink
-                          onClick={() => setCurrentPage(totalPages)}
-                          isActive={currentPage === totalPages}
-                          className="cursor-pointer"
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    </>
-                  )}
-
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : "cursor-pointer"
-                      }
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            <ClientPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              limit={limit}
+              total={total}
+              onPageChange={setCurrentPage}
+              onLimitChange={setLimit}
+            />
           )}
         </CardContent>
       </Card>
 
-      {/* Assign Dialog */}
-      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Asignar Clientes</DialogTitle>
-            <DialogDescription>
-              Selecciona un usuario para asignar {selectedRows.length} cliente
-              {selectedRows.length > 1 ? "s" : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="assignee">Usuario</Label>
-              <UserSelector
-                value={selectedAssigneeId}
-                onValueChange={setSelectedAssigneeId}
-                token={token}
-                disabled={isProcessing}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAssignDialog(false);
-                setSelectedAssigneeId("");
-              }}
-              disabled={isProcessing}
-            >
-              Cancelar
-            </Button>
-            <Button onClick={handleBulkAssign} disabled={isProcessing || !selectedAssigneeId}>
-              {isProcessing ? "Asignando..." : "Asignar"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <AssignClientDialog
+        open={showAssignDialog}
+        selectedCount={selectedRows.length}
+        selectedAssigneeId={selectedAssigneeId}
+        isProcessing={isProcessing}
+        token={token}
+        onOpenChange={setShowAssignDialog}
+        onAssigneeChange={setSelectedAssigneeId}
+        onConfirm={handleBulkAssign}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Esto eliminará permanentemente el cliente
-              de la base de datos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                setShowDeleteDialog(false);
-                setDeleteClientId(null);
-              }}
-              disabled={isProcessing}
-            >
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteClient}
-              disabled={isProcessing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isProcessing ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteClientDialog
+        open={showDeleteDialog}
+        isProcessing={isProcessing}
+        onOpenChange={(open) => {
+          setShowDeleteDialog(open);
+          if (!open) setDeleteClientId(null);
+        }}
+        onConfirm={handleDeleteClient}
+      />
 
-      {/* Bulk Delete Confirmation Dialog */}
-      <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán permanentemente{" "}
-              {selectedRows.length} cliente{selectedRows.length > 1 ? "s" : ""} de la base
-              de datos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setShowBulkDeleteDialog(false)}
-              disabled={isProcessing}
-            >
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleBulkDelete}
-              disabled={isProcessing}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isProcessing ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BulkDeleteDialog
+        open={showBulkDeleteDialog}
+        selectedCount={selectedRows.length}
+        isProcessing={isProcessing}
+        onOpenChange={setShowBulkDeleteDialog}
+        onConfirm={handleBulkDelete}
+      />
     </div>
   );
 }
