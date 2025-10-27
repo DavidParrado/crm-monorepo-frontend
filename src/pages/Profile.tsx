@@ -29,7 +29,7 @@ export default function Profile() {
             <div className="flex-1">
               <p className="text-sm font-medium text-muted-foreground">Nombre Completo</p>
               <p className="text-base font-medium">
-                {user.firstName} {user.lastName}
+                {user.firstName} {user?.lastName || ""}
               </p>
             </div>
           </div>

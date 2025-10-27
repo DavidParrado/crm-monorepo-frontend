@@ -54,7 +54,7 @@ export function AppSidebar() {
 
   const getInitials = () => {
     if (!user) return "U";
-    return `${user.firstName[0]}${user.lastName[0] ?? ''}`.toUpperCase();
+    return `${user.firstName[0]}${user?.lastName ? user.lastName[0] : ''}`.toUpperCase();
   };
 
   const getNavClass = (isActive: boolean) => {
@@ -131,7 +131,7 @@ export function AppSidebar() {
             </Avatar>
             <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {capitalize(user?.firstName + ' ' + user?.lastName)}
+                {capitalize(user?.firstName + ' ' + (user?.lastName || ''))}
               </p>
               <p className="text-xs text-sidebar-foreground/60 truncate">
                 {user?.username}

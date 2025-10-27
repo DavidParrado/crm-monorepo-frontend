@@ -50,7 +50,7 @@ export default function AppointmentModal({
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  
+
   const isAdmin = user?.role?.name === RoleEnum.Admin;
 
   useEffect(() => {
@@ -106,7 +106,7 @@ export default function AppointmentModal({
       });
       return;
     }
-    
+
     // Solo validar userId si es admin
     if (isAdmin && !appointment && !formData.userId) {
       toast({
@@ -122,7 +122,7 @@ export default function AppointmentModal({
     try {
       // Combine local date and time into a single Date object
       const localDateTime = new Date(`${formData.date}T${formData.time}`);
-      
+
       // Convert to UTC ISO string for the API
       const appointmentDate = localDateTime.toISOString();
 
@@ -202,7 +202,7 @@ export default function AppointmentModal({
                 <SelectContent>
                   {users.map((user) => (
                     <SelectItem key={user.id} value={user.id.toString()}>
-                      {user.firstName} {user.lastName}
+                      {user.firstName} {user?.lastName || ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

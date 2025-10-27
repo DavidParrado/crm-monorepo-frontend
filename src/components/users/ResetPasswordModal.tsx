@@ -95,7 +95,7 @@ export function ResetPasswordModal({
         <DialogHeader>
           <DialogTitle>Resetear Contraseña</DialogTitle>
           <DialogDescription>
-            Establece una nueva contraseña para {user.firstName} {user.lastName}
+            Establece una nueva contraseña para {user.firstName} {user?.lastName ?? ''} ({user.username})
           </DialogDescription>
         </DialogHeader>
 
