@@ -1,16 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Eye, Filter, Trash2 } from "lucide-react";
 import { DynamicIcon } from "@/components/ui/dynamic-icon";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useAuthStore } from "@/store/authStore";
 import { RoleEnum } from "@/types/role";
-import { API_URL } from "@/lib/constants";
 import { Client } from "@/types/client";
-import { Status } from "@/types/status";
-import { Group } from "@/types/group";
-import { Management } from "@/types/management";
 import { toast } from "sonner";
+import { useClients } from "@/hooks/useClients";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useClientFilters } from "@/hooks/useClientFilters";
+import * as clientService from "@/services/clientService";
 import {
   Pagination,
   PaginationContent,
@@ -62,179 +61,55 @@ import {
 import { Label } from "@/components/ui/label";
 import { UserSelector } from "@/components/client/UserSelector";
 
-interface FilterOptions {
-  countries?: string[];
-  campaigns?: string[];
-  statuses?: Status[];
-  assignedUsers?: { id: number; name: string }[];
-  groups?: Group[];
-  managements?: Management[];
-}
-
-interface ClientsResponse {
-  data: Client[];
-  total: number;
-}
-
-interface DashboardStat {
-  name: string;
-  key: string;
-  icon: string | null;
-  count: number;
-  filter: Record<string, any>;
-}
 
 export default function Dashboard() {
-  const { token, user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const navigate = useNavigate();
-  
-  // State
-  const [clients, setClients] = useState<Client[]>([]);
-  const [total, setTotal] = useState(0);
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
-  const [stats, setStats] = useState<DashboardStat[]>([]);
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
-  
-  // Filters
-  const [selectedCountry, setSelectedCountry] = useState<string>("all");
-  const [selectedCampaign, setSelectedCampaign] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedUser, setSelectedUser] = useState<string>("all");
-  const [selectedGroup, setSelectedGroup] = useState<string>("all");
-  const [selectedManagement, setSelectedManagement] = useState<string>("all");
-  const [sortBy] = useState("createdAt");
-  const [sortOrder] = useState<"ASC" | "DESC">("DESC");
+
+  // Custom hooks for data management
+  const {
+    clients,
+    total,
+    totalPages,
+    isLoading,
+    selectedRows,
+    setSelectedRows,
+    searchQuery,
+    setSearchQuery,
+    currentPage,
+    setCurrentPage,
+    limit,
+    setLimit,
+    debouncedSearch,
+    selectedCountry,
+    setSelectedCountry,
+    selectedCampaign,
+    setSelectedCampaign,
+    selectedStatus,
+    setSelectedStatus,
+    selectedUser,
+    setSelectedUser,
+    selectedGroup,
+    setSelectedGroup,
+    selectedManagement,
+    setSelectedManagement,
+    clearFilters,
+    hasActiveFilters,
+    refetchClients,
+  } = useClients();
+
+  const { stats, isLoadingStats } = useDashboardStats();
+  const { filterOptions } = useClientFilters();
+
+  // UI state
   const [showFilters, setShowFilters] = useState(false);
-  
-  // Action states
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteClientId, setDeleteClientId] = useState<number | null>(null);
   const [selectedAssigneeId, setSelectedAssigneeId] = useState<string>("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
-  
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  
-  const totalPages = Math.ceil(total / limit);
 
-  // Fetch dashboard stats
-  useEffect(() => {
-    const fetchStats = async () => {
-      setIsLoadingStats(true);
-      try {
-        const response = await fetch(`${API_URL}/dashboard/stats`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Error al cargar estadísticas");
-
-        const data = await response.json();
-        setStats(data);
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-        toast.error("Error al cargar las estadísticas");
-      } finally {
-        setIsLoadingStats(false);
-      }
-    };
-
-    if (token) {
-      fetchStats();
-    }
-  }, [token]);
-
-  // Fetch filter options
-  useEffect(() => {
-    const fetchFilterOptions = async () => {
-      try {
-        const response = await fetch(`${API_URL}/clients/filter-options`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Error al cargar opciones de filtro");
-
-        const data = await response.json();
-        setFilterOptions(data);
-      } catch (error) {
-        console.error("Error fetching filter options:", error);
-        toast.error("Error al cargar las opciones de filtro");
-      }
-    };
-
-    if (token) {
-      fetchFilterOptions();
-    }
-  }, [token]);
-
-  // Fetch clients
-  useEffect(() => {
-    const fetchClients = async () => {
-      setIsLoading(true);
-      try {
-        const params = new URLSearchParams({
-          page: currentPage.toString(),
-          limit: limit.toString(),
-          sortBy,
-          sortOrder,
-        });
-
-        if (debouncedSearch) params.append("search", debouncedSearch);
-        if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
-        if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
-        if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
-        if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
-        if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
-        if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
-
-        const response = await fetch(`${API_URL}/clients?${params}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) throw new Error("Error al cargar clientes");
-
-        const data: ClientsResponse = await response.json();
-        setClients(data.data);
-        setTotal(data.total);
-        setSelectedRows([]);
-      } catch (error) {
-        console.error("Error fetching clients:", error);
-        toast.error("Error al cargar los clientes");
-        setClients([]);
-        setTotal(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchClients();
-    }
-  }, [
-    token,
-    currentPage,
-    limit,
-    debouncedSearch,
-    selectedCountry,
-    selectedCampaign,
-    selectedStatus,
-    selectedUser,
-    selectedGroup,
-    selectedManagement,
-    sortBy,
-    sortOrder,
-  ]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -252,24 +127,7 @@ export default function Dashboard() {
     }
   };
 
-  const clearFilters = () => {
-    setSelectedCountry("all");
-    setSelectedCampaign("all");
-    setSelectedStatus("all");
-    setSelectedUser("all");
-    setSelectedGroup("all");
-    setSelectedManagement("all");
-    setCurrentPage(1);
-  };
-
-  const hasActiveFilters = 
-    (selectedCountry && selectedCountry !== "all") || 
-    (selectedCampaign && selectedCampaign !== "all") || 
-    (selectedStatus && selectedStatus !== "all") || 
-    (selectedUser && selectedUser !== "all") || 
-    (selectedGroup && selectedGroup !== "all") ||
-    (selectedManagement && selectedManagement !== "all");
-
+  // Role-based permissions
   const userRole = user?.role?.name as RoleEnum;
   const canFilterByUser = userRole === RoleEnum.Admin || userRole === RoleEnum.TeamLeader;
   const canFilterByGroup = userRole === RoleEnum.Admin;
@@ -278,13 +136,8 @@ export default function Dashboard() {
   // Handle stat card click
   const handleStatClick = (filter: Record<string, any>) => {
     // Clear all filters first
-    setSelectedCountry("all");
-    setSelectedCampaign("all");
-    setSelectedStatus("all");
-    setSelectedUser("all");
-    setSelectedGroup("all");
-    setSelectedManagement("all");
-    
+    clearFilters();
+
     // Apply the filter from the card
     if (filter.statusId) {
       setSelectedStatus(filter.statusId.toString());
@@ -292,11 +145,7 @@ export default function Dashboard() {
     if (filter.lastManagementId) {
       setSelectedManagement(filter.lastManagementId.toString());
     }
-    if (filter.assignedToUserId === "notNull") {
-      // This would require backend support for a "hasAssignment" filter
-      // For now, we can show all clients and the user can use the assignedUser filter
-    }
-    
+
     // Reset to page 1 and show filters
     setCurrentPage(1);
     setShowFilters(true);
@@ -311,50 +160,14 @@ export default function Dashboard() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/clients/assign-bulk`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          clientIds: selectedRows,
-          assigneeUserId: parseInt(selectedAssigneeId),
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al asignar clientes");
-      }
-
-      const result = await response.json();
+      const result = await clientService.bulkAssignClients(
+        selectedRows,
+        parseInt(selectedAssigneeId)
+      );
       toast.success(result.message);
       setShowAssignDialog(false);
       setSelectedAssigneeId("");
-      
-      // Refresh data
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-      if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
-      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
-      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
-      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
-      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
-      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
-
-      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: ClientsResponse = await refreshResponse.json();
-      setClients(data.data);
-      setTotal(data.total);
-      setSelectedRows([]);
+      refetchClients();
     } catch (error) {
       console.error("Error assigning clients:", error);
       toast.error(error instanceof Error ? error.message : "Error al asignar clientes");
@@ -368,45 +181,9 @@ export default function Dashboard() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/clients/unassign-bulk`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ clientIds: selectedRows }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al desasignar clientes");
-      }
-
-      const result = await response.json();
+      const result = await clientService.bulkUnassignClients(selectedRows);
       toast.success(result.message);
-      
-      // Refresh data
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-      if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
-      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
-      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
-      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
-      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
-      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
-
-      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: ClientsResponse = await refreshResponse.json();
-      setClients(data.data);
-      setTotal(data.total);
-      setSelectedRows([]);
+      refetchClients();
     } catch (error) {
       console.error("Error unassigning clients:", error);
       toast.error(error instanceof Error ? error.message : "Error al desasignar clientes");
@@ -420,22 +197,9 @@ export default function Dashboard() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/clients/export`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ clientIds: selectedRows }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al exportar clientes");
-      }
+      const blob = await clientService.exportClients(selectedRows);
 
       // Create blob and download
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -444,7 +208,7 @@ export default function Dashboard() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast.success("Clientes exportados exitosamente");
       setSelectedRows([]);
     } catch (error) {
@@ -460,44 +224,11 @@ export default function Dashboard() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/clients/${deleteClientId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al eliminar cliente");
-      }
-
+      await clientService.deleteClient(deleteClientId);
       toast.success("Cliente eliminado exitosamente");
       setShowDeleteDialog(false);
       setDeleteClientId(null);
-      
-      // Refresh data
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-      if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
-      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
-      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
-      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
-      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
-      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
-
-      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: ClientsResponse = await refreshResponse.json();
-      setClients(data.data);
-      setTotal(data.total);
-      setSelectedRows([]);
+      refetchClients();
     } catch (error) {
       console.error("Error deleting client:", error);
       toast.error(error instanceof Error ? error.message : "Error al eliminar cliente");
@@ -514,46 +245,10 @@ export default function Dashboard() {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`${API_URL}/clients/delete-bulk`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ clientIds: selectedRows }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al eliminar clientes");
-      }
-
-      const result = await response.json();
+      const result = await clientService.bulkDeleteClients(selectedRows);
       toast.success(result.message || "Clientes eliminados exitosamente");
       setShowBulkDeleteDialog(false);
-      
-      // Refresh data
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-        sortBy,
-        sortOrder,
-      });
-      if (debouncedSearch) params.append("search", debouncedSearch);
-      if (selectedCountry && selectedCountry !== "all") params.append("country", selectedCountry);
-      if (selectedCampaign && selectedCampaign !== "all") params.append("campaign", selectedCampaign);
-      if (selectedStatus && selectedStatus !== "all") params.append("statusId", selectedStatus);
-      if (selectedUser && selectedUser !== "all") params.append("assignedUserId", selectedUser);
-      if (selectedGroup && selectedGroup !== "all") params.append("groupId", selectedGroup);
-      if (selectedManagement && selectedManagement !== "all") params.append("lastManagementId", selectedManagement);
-
-      const refreshResponse = await fetch(`${API_URL}/clients?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data: ClientsResponse = await refreshResponse.json();
-      setClients(data.data);
-      setTotal(data.total);
-      setSelectedRows([]);
+      refetchClients();
     } catch (error) {
       console.error("Error deleting clients:", error);
       toast.error(error instanceof Error ? error.message : "Error al eliminar clientes");
@@ -588,7 +283,7 @@ export default function Dashboard() {
             <Card
               key={stat.key}
               className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
-              onClick={() => handleStatClick(stat.filter)}
+              onClick={() => handleStatClick(stat.filterCriteria)}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
