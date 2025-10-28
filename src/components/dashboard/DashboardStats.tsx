@@ -32,7 +32,7 @@ export function DashboardStats({ stats, isLoading, onStatClick }: DashboardStats
         <Card
           key={stat.key}
           className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50"
-          onClick={() => onStatClick(stat.filterCriteria)}
+          onClick={() => stat.filterCriteria && onStatClick(stat.filterCriteria)}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">

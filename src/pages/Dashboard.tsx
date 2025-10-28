@@ -95,6 +95,8 @@ export default function Dashboard() {
 
   // Handle stat card click
   const handleStatClick = (filter: Record<string, any>) => {
+    if (!filter) return;
+    
     // Clear all filters first
     clearFilters();
 
