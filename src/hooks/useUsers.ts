@@ -17,7 +17,8 @@ export function useUsers(shouldFetch: boolean = true) {
   const fetchUsers = async () => {
     try {
       setIsLoadingUsers(true);
-      const data = await getUsers();
+      const params = new URLSearchParams({ limit: "1000" });
+      const data = await getUsers(params);
       setUsers(data.data);
     } catch (error) {
       toast({

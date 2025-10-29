@@ -61,3 +61,27 @@ export const bulkDeleteClients = async (
 export const exportClients = async (clientIds: number[]): Promise<Blob> => {
   return http.postBlob<{ clientIds: number[] }>("clients/export", { clientIds });
 };
+
+// --- Single Client Operations ---
+
+export const getClientById = (id: string): Promise<Client> => {
+  return http.get<Client>(`clients/${id}`);
+};
+
+// --- Conversion Operations ---
+
+export const proposeConversion = (id: number): Promise<Client> => {
+  return http.post<Client, {}>(`clients/${id}/propose-conversion`, {});
+};
+
+export const confirmConversion = (id: number): Promise<Client> => {
+  return http.post<Client, {}>(`clients/${id}/confirm-conversion`, {});
+};
+
+export const rejectConversion = (id: number): Promise<Client> => {
+  return http.post<Client, {}>(`clients/${id}/reject-conversion`, {});
+};
+
+export const cancelProposal = (id: number): Promise<Client> => {
+  return http.post<Client, {}>(`clients/${id}/cancel-proposal`, {});
+};

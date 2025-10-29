@@ -345,7 +345,6 @@ export default function Dashboard() {
         selectedCount={selectedRows.length}
         selectedAssigneeId={selectedAssigneeId}
         isProcessing={isProcessing}
-        token={token}
         onOpenChange={setShowAssignDialog}
         onAssigneeChange={setSelectedAssigneeId}
         onConfirm={handleBulkAssign}

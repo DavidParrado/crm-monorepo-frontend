@@ -1,8 +1,5 @@
-import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Note } from "@/types/notes";
 import {
@@ -15,59 +12,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-
-interface NotesResponse {
-  data: Note[];
-  total: number;
-}
-
 interface ClientNotesProps {
-  clientId: number;
-  refresh: number;
+  notes: Note[];
+  isLoading: boolean;
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
-
-export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
-  const { token } = useAuthStore();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const limit = 10;
-
-  useEffect(() => {
-    if (!clientId || !token) return;
-
-    const fetchNotes = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          `${API_URL}/notes/client/${clientId}?page=${page}&limit=${limit}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Error al cargar las notas');
-        }
-
-        const data: NotesResponse = await response.json();
-        const totalPages = Math.ceil(data.total / limit);
-        setNotes(data.data);
-        setTotalPages(totalPages);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Error al cargar las notas');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchNotes();
-  }, [clientId, token, page, refresh]);
+export function ClientNotes({ notes, isLoading, page, totalPages, onPageChange }: ClientNotesProps) {
 
   return (
     <Card>
@@ -119,7 +72,7 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
                   <PaginationContent>
                     <PaginationItem>
                       <PaginationPrevious 
-                        onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                        onClick={() => onPageChange(Math.max(1, page - 1))}
                         className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>
@@ -129,7 +82,7 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
                       return (
                         <PaginationItem key={pageNum}>
                           <PaginationLink
-                            onClick={() => setPage(pageNum)}
+                            onClick={() => onPageChange(pageNum)}
                             isActive={page === pageNum}
                             className="cursor-pointer"
                           >
@@ -146,7 +99,7 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
                         </PaginationItem>
                         <PaginationItem>
                           <PaginationLink
-                            onClick={() => setPage(totalPages)}
+                            onClick={() => onPageChange(totalPages)}
                             isActive={page === totalPages}
                             className="cursor-pointer"
                           >
@@ -158,7 +111,7 @@ export function ClientNotes({ clientId, refresh }: ClientNotesProps) {
                     
                     <PaginationItem>
                       <PaginationNext 
-                        onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
                         className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                       />
                     </PaginationItem>

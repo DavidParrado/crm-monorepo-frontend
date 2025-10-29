@@ -15,7 +15,6 @@ interface AssignClientDialogProps {
   selectedCount: number;
   selectedAssigneeId: string;
   isProcessing: boolean;
-  token: string | null;
   onOpenChange: (open: boolean) => void;
   onAssigneeChange: (value: string) => void;
   onConfirm: () => void;
@@ -26,7 +25,6 @@ export function AssignClientDialog({
   selectedCount,
   selectedAssigneeId,
   isProcessing,
-  token,
   onOpenChange,
   onAssigneeChange,
   onConfirm,
@@ -47,7 +45,7 @@ export function AssignClientDialog({
             <UserSelector
               value={selectedAssigneeId}
               onValueChange={onAssigneeChange}
-              token={token}
+              token={null}
               disabled={isProcessing}
             />
           </div>

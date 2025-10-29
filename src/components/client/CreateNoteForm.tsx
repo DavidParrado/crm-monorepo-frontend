@@ -1,7 +1,3 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -19,93 +15,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useAuthStore } from "@/store/authStore";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { Management } from "@/types/management";
-
-const noteSchema = z.object({
-  content: z.string().min(5, "Mínimo 5 caracteres").max(1000, "Máximo 1000 caracteres"),
-  managementId: z.string().min(1, "Debes seleccionar una gestión"),
-});
-
-type NoteFormData = z.infer<typeof noteSchema>;
+import { useCreateNoteForm } from "@/hooks/useCreateNoteForm";
 
 interface CreateNoteFormProps {
   clientId: number;
   onNoteCreated: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
-
 export function CreateNoteForm({ clientId, onNoteCreated }: CreateNoteFormProps) {
-  const { token } = useAuthStore();
-  const [managements, setManagements] = useState<Management[]>([]);
-  const [isLoadingManagements, setIsLoadingManagements] = useState(true);
-
-  const form = useForm<NoteFormData>({
-    resolver: zodResolver(noteSchema),
-    defaultValues: {
-      content: "",
-      managementId: "",
-    },
+  const { form, managements, isLoadingManagements, onSubmit } = useCreateNoteForm({
+    clientId,
+    onNoteCreated,
   });
-
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchManagements = async () => {
-      try {
-        const response = await fetch(`${API_URL}/managements`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al cargar las gestiones');
-        }
-
-        const data = await response.json();
-        setManagements(data);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Error al cargar las gestiones');
-      } finally {
-        setIsLoadingManagements(false);
-      }
-    };
-
-    fetchManagements();
-  }, [token]);
-
-  const onSubmit = async (data: NoteFormData) => {
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_URL}/notes`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          clientId,
-          content: data.content,
-          managementId: parseInt(data.managementId),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear la nota');
-      }
-
-      toast.success('Nota creada exitosamente');
-      form.reset();
-      onNoteCreated();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al crear la nota');
-    }
-  };
 
   return (
     <Form {...form}>
