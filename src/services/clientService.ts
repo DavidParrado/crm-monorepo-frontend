@@ -1,59 +1,19 @@
-// Client Service - Centralized API logic for client management
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
+import { http } from "@/lib/http";
 import { Client } from "@/types/client";
 import { DashboardMetric } from "@/types/metric";
 import { PaginatedResponse } from "@/types/api";
 import { FilterOptions } from "@/types/filters";
 
-// Helper function to get authorization headers
-const getAuthHeader = () => {
-  const token = useAuthStore.getState().token;
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-};
-
-// Generic response handler with error management
-const handleResponse = async <T>(response: Response): Promise<T> => {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: "Ocurrió un error en la solicitud",
-    }));
-    throw new Error(error.message || "Ocurrió un error en la solicitud");
-  }
-
-  // Handle No Content responses (like DELETE)
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  // Handle blob responses (for exports)
-  const contentType = response.headers.get("content-type");
-  if (contentType?.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-    return response.blob() as T;
-  }
-
-  return response.json();
-};
-
 // --- Dashboard Stats ---
 
 export const getDashboardStats = async (): Promise<DashboardMetric[]> => {
-  const response = await fetch(`${API_URL}/dashboard/stats`, {
-    headers: getAuthHeader(),
-  });
-  return handleResponse<DashboardMetric[]>(response);
+  return http.get<DashboardMetric[]>("dashboard/stats");
 };
 
 // --- Filter Options ---
 
 export const getFilterOptions = async (): Promise<FilterOptions> => {
-  const response = await fetch(`${API_URL}/clients/filter-options`, {
-    headers: getAuthHeader(),
-  });
-  return handleResponse<FilterOptions>(response);
+  return http.get<FilterOptions>("clients/filter-options");
 };
 
 // --- Client CRUD Operations ---
@@ -61,18 +21,11 @@ export const getFilterOptions = async (): Promise<FilterOptions> => {
 export const getClients = async (
   params: URLSearchParams
 ): Promise<PaginatedResponse<Client>> => {
-  const response = await fetch(`${API_URL}/clients?${params}`, {
-    headers: getAuthHeader(),
-  });
-  return handleResponse<PaginatedResponse<Client>>(response);
+  return http.get<PaginatedResponse<Client>>("clients", params);
 };
 
 export const deleteClient = async (clientId: number): Promise<void> => {
-  const response = await fetch(`${API_URL}/clients/${clientId}`, {
-    method: "DELETE",
-    headers: getAuthHeader(),
-  });
-  return handleResponse<void>(response);
+  return http.del<void>(`clients/${clientId}`);
 };
 
 // --- Bulk Operations ---
@@ -81,41 +34,30 @@ export const bulkAssignClients = async (
   clientIds: number[],
   assigneeUserId: number
 ): Promise<{ message: string }> => {
-  const response = await fetch(`${API_URL}/clients/assign-bulk`, {
-    method: "POST",
-    headers: getAuthHeader(),
-    body: JSON.stringify({ clientIds, assigneeUserId }),
-  });
-  return handleResponse<{ message: string }>(response);
+  return http.post<{ message: string }, { clientIds: number[]; assigneeUserId: number }>(
+    "clients/assign-bulk",
+    { clientIds, assigneeUserId }
+  );
 };
 
 export const bulkUnassignClients = async (
   clientIds: number[]
 ): Promise<{ message: string }> => {
-  const response = await fetch(`${API_URL}/clients/unassign-bulk`, {
-    method: "POST",
-    headers: getAuthHeader(),
-    body: JSON.stringify({ clientIds }),
-  });
-  return handleResponse<{ message: string }>(response);
+  return http.post<{ message: string }, { clientIds: number[] }>(
+    "clients/unassign-bulk",
+    { clientIds }
+  );
 };
 
 export const bulkDeleteClients = async (
   clientIds: number[]
 ): Promise<{ message: string }> => {
-  const response = await fetch(`${API_URL}/clients/delete-bulk`, {
-    method: "POST",
-    headers: getAuthHeader(),
-    body: JSON.stringify({ clientIds }),
-  });
-  return handleResponse<{ message: string }>(response);
+  return http.post<{ message: string }, { clientIds: number[] }>(
+    "clients/delete-bulk",
+    { clientIds }
+  );
 };
 
 export const exportClients = async (clientIds: number[]): Promise<Blob> => {
-  const response = await fetch(`${API_URL}/clients/export`, {
-    method: "POST",
-    headers: getAuthHeader(),
-    body: JSON.stringify({ clientIds }),
-  });
-  return handleResponse<Blob>(response);
+  return http.postBlob<{ clientIds: number[] }>("clients/export", { clientIds });
 };
