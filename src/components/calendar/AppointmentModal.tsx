@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,13 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
-import { User } from "@/types/user";
-import { RoleEnum } from "@/types/role";
-import { format } from "date-fns";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
+import { Appointment } from "@/types/appointment";
+import { useAppointmentForm } from "@/hooks/useAppointmentForm";
+import { useUsers } from "@/hooks/useUsers";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -39,138 +34,13 @@ export default function AppointmentModal({
   appointment,
   onSuccess,
 }: AppointmentModalProps) {
-  const { token, user } = useAuthStore();
-  const [users, setUsers] = useState<User[]>([]);
-  const [formData, setFormData] = useState({
-    userId: "",
-    title: "",
-    description: "",
-    date: "",
-    time: ""
+  const { formData, setFormData, loading, handleSubmit, isAdmin } = useAppointmentForm({
+    appointment,
+    onSuccess,
+    open,
   });
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  const isAdmin = user?.role?.name === RoleEnum.Admin;
-
-  useEffect(() => {
-    if (open) {
-      if (isAdmin) {
-        fetchUsers();
-      }
-      if (appointment) {
-        // Parse UTC ISO string to local date and time for display
-        const localDate = new Date(appointment.appointmentDate);
-        setFormData({
-          userId: appointment.userId?.toString(),
-          title: appointment.title,
-          description: appointment.description || "",
-          date: format(localDate, "yyyy-MM-dd"),
-          time: format(localDate, "HH:mm"),
-        });
-      } else {
-        setFormData({
-          userId: "",
-          title: "",
-          description: "",
-          date: "",
-          time: "",
-        });
-      }
-    }
-  }, [open, appointment, isAdmin]);
-
-  const fetchUsers = async () => {
-    try {
-      const response = await fetch(`${API_URL}/users?limit=1000`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Error al cargar usuarios");
-      const data = await response.json();
-      setUsers(data.data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.title || !formData.date || !formData.time) {
-      toast({
-        title: "Error",
-        description: "Por favor completa todos los campos requeridos",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Solo validar userId si es admin
-    if (isAdmin && !appointment && !formData.userId) {
-      toast({
-        title: "Error",
-        description: "Por favor selecciona un usuario",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Combine local date and time into a single Date object
-      const localDateTime = new Date(`${formData.date}T${formData.time}`);
-
-      // Convert to UTC ISO string for the API
-      const appointmentDate = localDateTime.toISOString();
-
-      const url = appointment
-        ? `${API_URL}/appointments/${appointment.id}`
-        : `${API_URL}/appointments`;
-
-      const method = appointment ? "PATCH" : "POST";
-
-      const body: CreateAppointmentData | UpdateAppointmentData = appointment
-        ? {
-          ...(isAdmin && formData.userId ? { userId: parseInt(formData.userId) } : {}),
-          title: formData.title,
-          description: formData.description || undefined,
-          appointmentDate,
-        }
-        : {
-          ...(isAdmin && formData.userId ? { userId: parseInt(formData.userId) } : {}),
-          title: formData.title,
-          description: formData.description || undefined,
-          appointmentDate,
-        };
-
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) throw new Error("Error al guardar la cita");
-
-      toast({
-        title: "Éxito",
-        description: appointment ? "Cita actualizada correctamente" : "Cita creada correctamente",
-      });
-
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la cita",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { users } = useUsers(isAdmin && open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

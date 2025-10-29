@@ -9,9 +9,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
 import { Appointment } from "@/types/appointment";
+import { deleteAppointment } from "@/services/appointmentService";
 
 interface DeleteAppointmentDialogProps {
   open: boolean;
@@ -26,19 +25,13 @@ export default function DeleteAppointmentDialog({
   appointment,
   onSuccess,
 }: DeleteAppointmentDialogProps) {
-  const { token } = useAuthStore();
   const { toast } = useToast();
 
   const handleDelete = async () => {
     if (!appointment) return;
 
     try {
-      const response = await fetch(`${API_URL}/appointments/${appointment.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Error al eliminar la cita");
+      await deleteAppointment(appointment.id);
 
       toast({
         title: "Éxito",
@@ -46,7 +39,6 @@ export default function DeleteAppointmentDialog({
       });
 
       onSuccess();
-      onOpenChange(false);
     } catch (error) {
       toast({
         title: "Error",

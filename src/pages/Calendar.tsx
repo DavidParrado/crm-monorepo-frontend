@@ -3,13 +3,38 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import CalendarView from "@/components/calendar/CalendarView";
 import AppointmentModal from "@/components/calendar/AppointmentModal";
+import DeleteAppointmentDialog from "@/components/calendar/DeleteAppointmentDialog";
+import { useAppointments } from "@/hooks/useAppointments";
+import { Appointment } from "@/types/appointment";
 
 export default function Calendar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | undefined>();
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
 
-  const handleSuccess = () => {
-    setRefreshKey((prev) => prev + 1);
+  const {
+    appointments,
+    loading,
+    totalPages,
+    page,
+    handlePageChange,
+    refetchAppointments,
+  } = useAppointments();
+
+  const handleEdit = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setIsDeleteOpen(true);
+  };
+
+  const handleCreateNew = () => {
+    setSelectedAppointment(undefined);
+    setIsModalOpen(true);
   };
 
   return (
@@ -21,18 +46,41 @@ export default function Calendar() {
             Gestiona tus citas y recordatorios
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+        <Button onClick={handleCreateNew} className="gap-2">
           <Plus className="h-4 w-4" />
           Nueva Cita
         </Button>
       </div>
 
-      <CalendarView key={refreshKey} />
+      <CalendarView
+        appointments={appointments}
+        loading={loading}
+        totalPages={totalPages}
+        page={page}
+        onPageChange={handlePageChange}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onCreate={handleCreateNew}
+      />
 
       <AppointmentModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        onSuccess={handleSuccess}
+        appointment={selectedAppointment}
+        onSuccess={() => {
+          refetchAppointments();
+          setIsModalOpen(false);
+        }}
+      />
+
+      <DeleteAppointmentDialog
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        appointment={appointmentToDelete}
+        onSuccess={() => {
+          refetchAppointments();
+          setIsDeleteOpen(false);
+        }}
       />
     </div>
   );
