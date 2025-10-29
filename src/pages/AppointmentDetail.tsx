@@ -1,54 +1,24 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Edit, Trash2, ArrowLeft, User, Clock, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Appointment } from "@/types/appointment";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import AppointmentModal from "@/components/calendar/AppointmentModal";
 import DeleteAppointmentDialog from "@/components/calendar/DeleteAppointmentDialog";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
+import { useAppointmentDetail } from "@/hooks/useAppointmentDetail";
 
 export default function AppointmentDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { token } = useAuthStore();
-  const [appointment, setAppointment] = useState<Appointment | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { appointment, loading, refetchAppointment } = useAppointmentDetail(id);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (id) {
-      fetchAppointment();
-    }
-  }, [id]);
-
-  const fetchAppointment = async () => {
-    try {
-      const response = await fetch(`${API_URL}/appointments/${id}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error("Error al cargar la cita");
-      const data = await response.json();
-      setAppointment(data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo cargar la cita",
-        variant: "destructive",
-      });
-      navigate("/calendar");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEdit = () => {
     setIsModalOpen(true);
@@ -220,7 +190,7 @@ export default function AppointmentDetail() {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         appointment={appointment}
-        onSuccess={fetchAppointment}
+        onSuccess={refetchAppointment}
       />
 
       <DeleteAppointmentDialog

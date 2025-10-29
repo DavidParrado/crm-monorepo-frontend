@@ -59,3 +59,9 @@ export const deleteAppointment = (id: number): Promise<void> => {
     headers: getAuthHeader(),
   }).then(handleResponse);
 };
+
+export const getAppointmentById = (id: string): Promise<Appointment> => {
+  return fetch(`${API_URL}/appointments/${id}`, {
+    headers: getAuthHeader(),
+  }).then(handleResponse);
+};
