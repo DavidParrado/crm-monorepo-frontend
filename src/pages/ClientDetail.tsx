@@ -53,7 +53,6 @@ export default function ClientDetail() {
   const isAssignedToCurrentUser = client?.assignedToUserId === user?.id;
   const isAssignedToTeamMember = isTeamLeader && client?.assignedTo?.teamLeaderId === user?.id;
 
-  console.log({ client, user, isAssignedToCurrentUser, isAssignedToTeamMember });
   const statusName = client?.status?.name;
   const canProposeConversion = statusName === 'Asignado' && (isAgent || isTeamLeader || isAdmin);
   const canConfirmConversion = statusName === 'Pendiente de Verificación' && isAdmin;

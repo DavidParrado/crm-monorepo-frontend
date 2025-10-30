@@ -50,14 +50,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ isLoading: true });
     try {
       const data = await notificationService.getRecentNotifications();
-      console.log('📨 Fetched notifications from API:', data);
       const notifications = data.data || [];
-      if (notifications.length > 0) {
-        console.log('📅 First notification createdAt:', notifications[0].createdAt);
-        console.log('📅 First notification as Date:', new Date(notifications[0].createdAt));
-        console.log('📅 First notification ISO:', new Date(notifications[0].createdAt).toISOString());
-        console.log('📅 First notification local:', new Date(notifications[0].createdAt).toLocaleString());
-      }
       get().setNotifications(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
