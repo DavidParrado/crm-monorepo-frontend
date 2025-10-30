@@ -3,7 +3,6 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { useAuthStore } from "@/store/authStore";
-import { useNotificationWebSocket } from "@/hooks/useNotificationWebSocket";
 import { useNotificationStore } from "@/store/notificationStore";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
@@ -13,17 +12,21 @@ export function MainLayout() {
   const { isAuthenticated, checkAuth, token } = useAuthStore();
   const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
   
-  const { fetchNotifications } = useNotificationStore();
+  const { fetchNotifications, initWebSocket, disconnectWebSocket } = useNotificationStore();
   
-  // Establecer conexión WebSocket para notificaciones
-  useNotificationWebSocket(token);
-
-  // Cargar notificaciones al iniciar la aplicación
+  // Initialize WebSocket connection when user is authenticated
   useEffect(() => {
     if (token) {
       fetchNotifications();
+      initWebSocket(token);
+    } else {
+      disconnectWebSocket();
     }
-  }, [token, fetchNotifications]);
+
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [token, fetchNotifications, initWebSocket, disconnectWebSocket]);
 
 
   const runAuthCheck = useCallback(async () => {
