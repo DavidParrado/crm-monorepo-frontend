@@ -111,9 +111,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
     // Use the correct 'auth' method for Socket.IO
     const socket = io(WS_URL, {
-      auth: {
-        token: `Bearer ${token}`
-      }
+      transportOptions: {
+        polling: {
+          extraHeaders: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      },
     });
 
     set({ socket });
