@@ -1,12 +1,9 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, CheckCircle } from "lucide-react";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
-import { ImportPreview, ImportMapping, AVAILABLE_FIELDS, ImportUploadResponse } from "@/types/import";
+import { ImportPreview, AVAILABLE_FIELDS, ImportUploadResponse } from "@/types/import";
+import { useColumnMapper } from "@/hooks/useColumnMapper";
 
 interface ColumnMapperProps {
   preview: ImportPreview;
@@ -16,77 +13,11 @@ interface ColumnMapperProps {
 }
 
 export const ColumnMapper = ({ preview, file, onCancel, onSuccess }: ColumnMapperProps) => {
-  const [mapping, setMapping] = useState<ImportMapping>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
-
-  const handleMappingChange = (columnIndex: number, fieldName: string) => {
-    setMapping(prev => ({
-      ...prev,
-      [columnIndex]: fieldName
-    }));
-  };
-
-  const handleSubmit = async () => {
-    // Validar que al menos un campo esté mapeado (no ignore)
-    const hasMapping = Object.values(mapping).some(field => field !== 'ignore');
-    if (!hasMapping) {
-      toast({
-        title: "Error",
-        description: "Debes mapear al menos una columna",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validar que email esté mapeado
-    const hasEmail = Object.values(mapping).includes('email');
-    if (!hasEmail) {
-      toast({
-        title: "Error",
-        description: "Debes mapear la columna de Email",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('mapping', JSON.stringify(mapping));
-
-      const response = await fetch(`${API_URL}/imports/upload`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al procesar la importación');
-      }
-
-      const result: ImportUploadResponse = await response.json();
-
-      toast({
-        title: "Importación completada",
-        description: `${result.successful} registros exitosos, ${result.failed} fallidos`,
-      });
-
-      onSuccess(result);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo procesar la importación",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { mapping, isSubmitting, handleMappingChange, handleSubmit } = useColumnMapper({
+    preview,
+    file,
+    onSuccess,
+  });
 
   return (
     <div className="space-y-4">
@@ -98,7 +29,7 @@ export const ColumnMapper = ({ preview, file, onCancel, onSuccess }: ColumnMappe
           </p>
         </div>
         <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
       </div>

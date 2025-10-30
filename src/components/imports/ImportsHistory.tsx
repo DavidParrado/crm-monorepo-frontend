@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,51 +13,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
 import { Import } from "@/types/import";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-export const ImportsHistory = () => {
-  const [imports, setImports] = useState<Import[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+interface ImportsHistoryProps {
+  imports: Import[];
+  isLoading: boolean;
+  onDelete: (id: number) => Promise<void>;
+}
+
+export const ImportsHistory = ({ imports, isLoading, onDelete }: ImportsHistoryProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedImport, setSelectedImport] = useState<Import | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
-  const token = useAuthStore((state) => state.token);
-
-  useEffect(() => {
-    fetchImports();
-  }, []);
-
-  const fetchImports = async () => {
-    try {
-      const response = await fetch(`${API_URL}/imports`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar el historial');
-      }
-
-      const data = await response.json();
-      setImports(data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo cargar el historial de importaciones",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDeleteClick = (importItem: Import) => {
     setSelectedImport(importItem);
@@ -69,30 +39,9 @@ export const ImportsHistory = () => {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`${API_URL}/imports/${selectedImport.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar la importación');
-      }
-
-      toast({
-        title: "Importación eliminada",
-        description: "Los registros de esta importación han sido eliminados exitosamente",
-      });
-
-      // Refresh the list
-      fetchImports();
+      await onDelete(selectedImport.id);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la importación",
-        variant: "destructive",
-      });
+      // Error handling is done in the hook
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

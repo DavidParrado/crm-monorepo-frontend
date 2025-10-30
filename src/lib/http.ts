@@ -110,5 +110,23 @@ export const http = {
       headers: getAuthHeader(),
       body: JSON.stringify(data),
     }).then(handleResponse);
+  },
+
+  /**
+   * Performs a POST request with FormData (for file uploads).
+   * @param endpoint The URL path (e.g., "imports/parse-preview")
+   * @param data The FormData object to send
+   */
+  postForm: <TResponse>(endpoint: string, data: FormData): Promise<TResponse> => {
+    const token = useAuthStore.getState().token;
+    
+    return fetch(`${API_URL}/${endpoint}`, {
+      method: "POST",
+      headers: {
+        // NO 'Content-Type' header. The browser sets it correctly for FormData.
+        'Authorization': `Bearer ${token}`,
+      },
+      body: data,
+    }).then(handleResponse);
   }
 };

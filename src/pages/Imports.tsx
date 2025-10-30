@@ -1,15 +1,11 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImportUploader } from "@/components/imports/ImportUploader";
 import { ImportsHistory } from "@/components/imports/ImportsHistory";
+import { useImportsHistory } from "@/hooks/useImportsHistory";
 
 const Imports = () => {
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const handleImportSuccess = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  const { imports, isLoading, handleDelete, refetchHistory } = useImportsHistory();
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -33,13 +29,13 @@ const Imports = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ImportUploader onSuccess={handleImportSuccess} />
+              <ImportUploader onSuccess={refetchHistory} />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="history" className="space-y-4">
-          <ImportsHistory key={refreshKey} />
+          <ImportsHistory imports={imports} isLoading={isLoading} onDelete={handleDelete} />
         </TabsContent>
       </Tabs>
     </div>
