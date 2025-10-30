@@ -1,5 +1,4 @@
 import { useNavigate, Link } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
 import { CheckCheck, Clock, ArrowRight, Bell as BellIcon, CheckCircle, AlertCircle, Info } from "lucide-react";
@@ -14,11 +13,9 @@ interface NotificationPanelProps {
 
 export function NotificationPanel({ onClose }: NotificationPanelProps) {
   const navigate = useNavigate();
-  const { token } = useAuthStore();
   const { 
     notifications, 
     isLoading, 
-    fetchNotifications, 
     markAsRead, 
     markAllAsRead 
   } = useNotificationStore();
@@ -26,9 +23,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
   // Las notificaciones ya se cargan en MainLayout, solo las mostramos aquí
 
   const handleNotificationClick = async (id: number, link: string | null) => {
-    if (token) {
-      await markAsRead(id, token);
-    }
+    await markAsRead(id);
     onClose?.();
     if (link) {
       navigate(link);
@@ -36,9 +31,7 @@ export function NotificationPanel({ onClose }: NotificationPanelProps) {
   };
 
   const handleMarkAllAsRead = () => {
-    if (token) {
-      markAllAsRead(token);
-    }
+    markAllAsRead();
   };
 
   if (isLoading) {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { AppNotification } from '@/types/notification';
-import { API_URL } from '@/lib/constants';
+import * as notificationService from '@/services/notificationService';
 
 interface NotificationState {
   notifications: AppNotification[];
@@ -8,9 +8,9 @@ interface NotificationState {
   isLoading: boolean;
   addNotification: (notification: AppNotification) => void;
   setNotifications: (notifications: AppNotification[]) => void;
-  markAsRead: (id: number, token: string) => Promise<void>;
-  markAllAsRead: (token: string) => Promise<void>;
-  fetchNotifications: (token: string) => Promise<void>;
+  markAsRead: (id: number) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  fetchNotifications: () => Promise<void>;
   updateUnreadCount: () => void;
 }
 
@@ -37,29 +37,19 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ unreadCount: count });
   },
 
-  fetchNotifications: async (token) => {
+  fetchNotifications: async () => {
     set({ isLoading: true });
     try {
-      const response = await fetch(`${API_URL}/notifications`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al obtener notificaciones');
+      const data = await notificationService.getRecentNotifications();
+      console.log('📨 Fetched notifications from API:', data);
+      const notifications = data.data || [];
+      if (notifications.length > 0) {
+        console.log('📅 First notification createdAt:', notifications[0].createdAt);
+        console.log('📅 First notification as Date:', new Date(notifications[0].createdAt));
+        console.log('📅 First notification ISO:', new Date(notifications[0].createdAt).toISOString());
+        console.log('📅 First notification local:', new Date(notifications[0].createdAt).toLocaleString());
       }
-
-    const data = await response.json();
-    console.log('📨 Fetched notifications from API:', data);
-    const notifications = data.data || data;
-    if (notifications.length > 0) {
-      console.log('📅 First notification createdAt:', notifications[0].createdAt);
-      console.log('📅 First notification as Date:', new Date(notifications[0].createdAt));
-      console.log('📅 First notification ISO:', new Date(notifications[0].createdAt).toISOString());
-      console.log('📅 First notification local:', new Date(notifications[0].createdAt).toLocaleString());
-    }
-    get().setNotifications(notifications);
+      get().setNotifications(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -67,19 +57,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  markAsRead: async (id, token) => {
+  markAsRead: async (id) => {
     try {
-      const response = await fetch(`${API_URL}/notifications/${id}/read`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al marcar notificación como leída');
-      }
-
+      await notificationService.markAsRead(id);
       set((state) => ({
         notifications: state.notifications.map((n) =>
           n.id === id ? { ...n, isRead: true } : n
@@ -91,19 +71,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  markAllAsRead: async (token) => {
+  markAllAsRead: async () => {
     try {
-      const response = await fetch(`${API_URL}/notifications/mark-all-as-read`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al marcar todas como leídas');
-      }
-
+      await notificationService.markAllAsRead();
       set((state) => ({
         notifications: state.notifications.map((n) => ({ ...n, isRead: true })),
         unreadCount: 0,

@@ -21,7 +21,7 @@ export function MainLayout() {
   // Cargar notificaciones al iniciar la aplicación
   useEffect(() => {
     if (token) {
-      fetchNotifications(token);
+      fetchNotifications();
     }
   }, [token, fetchNotifications]);
 

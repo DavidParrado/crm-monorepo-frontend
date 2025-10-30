@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,147 +30,35 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Bell, Trash2, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
+import { useNavigate } from "react-router-dom";
 import { AppNotification } from "@/types/notification";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { formatNotification, getNotificationTypeLabel } from "@/utils/notificationFormatter";
-
-const ITEMS_PER_PAGE = 12;
+import { useNotificationsPage } from "@/hooks/useNotificationsPage";
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { token } = useAuthStore();
-  const { toast } = useToast();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notificationToDelete, setNotificationToDelete] = useState<number | null>(null);
   
-  const currentPage = parseInt(searchParams.get("page") || "1", 10);
-
-  const fetchNotifications = async () => {
-    if (!token) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `${API_URL}/notifications?page=${currentPage}&limit=${ITEMS_PER_PAGE}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Error al obtener notificaciones');
-
-      const data = await response.json();
-      setNotifications(data.data || data);
-      setTotalCount(data.total || data.length);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar las notificaciones",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [token, currentPage]);
+  const {
+    notifications,
+    readNotifications,
+    totalPages,
+    loading,
+    currentPage,
+    handlePageChange,
+    markAsReadAndUpdate,
+    handleDelete,
+    handleDeleteRead,
+  } = useNotificationsPage();
 
   const handleNotificationClick = async (notification: AppNotification) => {
-    if (!notification.isRead && token) {
-      try {
-        await fetch(`${API_URL}/notifications/${notification.id}/read`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-        fetchNotifications();
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
-    
+    await markAsReadAndUpdate(notification);
     if (notification.link) {
       navigate(notification.link);
-    }
-  };
-
-  const handleDeleteNotification = async (id: number) => {
-    if (!token) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/notifications/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Error al eliminar notificación');
-
-      toast({
-        title: "Notificación eliminada",
-        description: "La notificación ha sido eliminada exitosamente",
-      });
-
-      fetchNotifications();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar la notificación",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-      setDeleteDialogOpen(false);
-      setNotificationToDelete(null);
-    }
-  };
-
-  const handleDeleteReadNotifications = async () => {
-    if (!token) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/notifications/read`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Error al eliminar notificaciones leídas');
-
-      toast({
-        title: "Notificaciones eliminadas",
-        description: "Todas las notificaciones leídas han sido eliminadas",
-      });
-
-      fetchNotifications();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron eliminar las notificaciones leídas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -179,14 +67,12 @@ export default function Notifications() {
     setDeleteDialogOpen(true);
   };
 
-  const readNotifications = notifications.filter(n => n.isRead);
-  const unreadNotifications = notifications.filter(n => !n.isRead);
-  
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
-  
-  const handlePageChange = (page: number) => {
-    setSearchParams({ page: page.toString() });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleDeleteConfirm = async () => {
+    if (notificationToDelete) {
+      await handleDelete(notificationToDelete);
+      setDeleteDialogOpen(false);
+      setNotificationToDelete(null);
+    }
   };
   
   const renderPaginationItems = () => {
@@ -263,7 +149,7 @@ export default function Notifications() {
           {readNotifications.length > 0 && (
             <Button
               variant="outline"
-              onClick={handleDeleteReadNotifications}
+              onClick={handleDeleteRead}
               disabled={loading}
             >
               <Trash2 className="h-4 w-4 mr-2" />
@@ -423,9 +309,7 @@ export default function Notifications() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => notificationToDelete && handleDeleteNotification(notificationToDelete)}
-            >
+            <AlertDialogAction onClick={handleDeleteConfirm}>
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
