@@ -1,11 +1,3 @@
-import { useState, useEffect } from "react";
-import { useAuthStore } from "@/store/authStore";
-import { API_URL } from "@/lib/constants";
-import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
-import { Status } from "@/types/status";
-import { Management } from "@/types/management";
-import { Group } from "@/types/group";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,320 +39,45 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { IconSelector } from "@/components/ui/icon-selector";
 import { DynamicIcon } from "@/components/ui/dynamic-icon";
-
-interface FilterOptions {
-  countries?: string[];
-  statuses?: Status[];
-  managements?: Management[];
-  groups?: Group[];
-}
-
-// Mapeo de campos de filtro a etiquetas legibles y entidad
-const FILTER_FIELD_MAP: Record<string, { label: string; entity: keyof FilterOptions }> = {
-  'statusId': { label: 'Estado del Cliente', entity: 'statuses' },
-  'lastManagementId': { label: 'Última Gestión', entity: 'managements' },
-  'country': { label: 'País', entity: 'countries' },
-  'groupId': { label: 'Grupo', entity: 'groups' }
-};
+import { useMetricsManager } from "@/hooks/useMetricsManager";
 
 export default function MetricsManager() {
-  const { token } = useAuthStore();
-  const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({});
-  
-  // Dialog states
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState<DashboardMetric | null>(null);
-  
-  // Form states
-  const [formName, setFormName] = useState("");
-  const [formKey, setFormKey] = useState("");
-  const [formIcon, setFormIcon] = useState("");
-  const [formFilterField, setFormFilterField] = useState<string>("");
-  const [formFilterValue, setFormFilterValue] = useState<string>("");
-  const [formDisplayOrder, setFormDisplayOrder] = useState("");
-  const [formIsActive, setFormIsActive] = useState(true);
-
-  const fetchMetrics = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/dashboard/metrics`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Error al cargar métricas");
-
-      const data = await response.json();
-      setMetrics(data);
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      toast.error("Error al cargar las métricas");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch filter options
-  const fetchFilterOptions = async () => {
-    try {
-      const response = await fetch(`${API_URL}/clients/filter-options`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Error al cargar opciones de filtro");
-
-      const data = await response.json();
-      setFilterOptions(data);
-    } catch (error) {
-      console.error("Error fetching filter options:", error);
-      toast.error("Error al cargar las opciones de filtro");
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      fetchMetrics();
-      fetchFilterOptions();
-    }
-  }, [token]);
-
-  const resetForm = () => {
-    setFormName("");
-    setFormKey("");
-    setFormIcon("");
-    setFormFilterField("");
-    setFormFilterValue("");
-    setFormDisplayOrder("");
-    setFormIsActive(true);
-  };
-
-  // Obtener el valor legible de un filtro
-  const getFilterDisplayValue = (field: string, value: any): string => {
-    if (!field || value === null || value === undefined) return '-';
-    
-    switch(field) {
-      case 'statusId':
-        const status = filterOptions.statuses?.find(s => s.id === value);
-        return status ? status.name : value.toString();
-      case 'lastManagementId':
-        const mgmt = filterOptions.managements?.find(m => m.id === value);
-        return mgmt ? mgmt.name : value.toString();
-      case 'groupId':
-        const group = filterOptions.groups?.find(g => g.id === value);
-        return group ? group.name : value.toString();
-      case 'country':
-        return value.toString();
-      default:
-        return value.toString();
-    }
-  };
-
-  // Renderizar filtro de forma legible en la tabla
-  const renderFilterDisplay = (filter: Record<string, any> | null | undefined) => {
-    if (!filter || Object.keys(filter).length === 0) {
-      return <span className="text-muted-foreground">Sin filtro</span>;
-    }
-    
-    const field = Object.keys(filter)[0];
-    const value = filter[field];
-    const fieldInfo = FILTER_FIELD_MAP[field];
-    
-    if (!fieldInfo) {
-      return <code className="text-xs bg-muted px-2 py-1 rounded">{JSON.stringify(filter)}</code>;
-    }
-    
-    const displayValue = getFilterDisplayValue(field, value);
-    
-    return (
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-semibold">{fieldInfo.label}</span>
-        <code className="text-xs bg-muted px-2 py-1 rounded">{displayValue}</code>
-      </div>
-    );
-  };
-
-  // Build filter object from form fields
-  const buildFilterObject = (): Record<string, any> | null => {
-    if (!formFilterField || !formFilterValue) return null;
-
-    const filterObj: Record<string, any> = {};
-    
-    switch (formFilterField) {
-      case "statusId":
-      case "lastManagementId":
-      case "groupId":
-        filterObj[formFilterField] = parseInt(formFilterValue);
-        break;
-      case "country":
-        filterObj[formFilterField] = formFilterValue;
-        break;
-      default:
-        return null;
-    }
-
-    return filterObj;
-  };
-
-  // Parse filter object to form fields
-  const parseFilterToFormFields = (filter: Record<string, any> | null | undefined) => {
-    if (!filter || typeof filter !== 'object' || Object.keys(filter).length === 0) {
-      setFormFilterField("");
-      setFormFilterValue("");
-      return;
-    }
-    
-    const field = Object.keys(filter)[0];
-    const value = filter[field];
-    
-    setFormFilterField(field);
-    setFormFilterValue(value?.toString() || "");
-  };
-
-  const handleCreate = async () => {
-    if (!formName || !formKey) {
-      toast.error("Nombre y clave son requeridos");
-      return;
-    }
-
-    const filterObj = buildFilterObject();
-    if (!filterObj) {
-      toast.error("Debes configurar un filtro válido");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const body: CreateMetricDto = {
-        name: formName,
-        key: formKey,
-        filterCriteria: filterObj,
-        isActive: formIsActive,
-      };
-
-      if (formIcon) body.icon = formIcon;
-      if (formDisplayOrder) body.displayOrder = parseInt(formDisplayOrder);
-
-      const response = await fetch(`${API_URL}/dashboard/metrics`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al crear métrica");
-      }
-
-      toast.success("Métrica creada exitosamente");
-      setShowCreateDialog(false);
-      resetForm();
-      fetchMetrics();
-    } catch (error) {
-      console.error("Error creating metric:", error);
-      toast.error(error instanceof Error ? error.message : "Error al crear la métrica");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!selectedMetric) return;
-
-    if (!formName) {
-      toast.error("El nombre es requerido");
-      return;
-    }
-
-    const filterObj = (formFilterField && formFilterValue) ? buildFilterObject() : undefined;
-
-    setIsSubmitting(true);
-    try {
-      const body: UpdateMetricDto = {
-        name: formName,
-        isActive: formIsActive,
-      };
-
-      if (formKey) body.key = formKey;
-      if (formIcon) body.icon = formIcon;
-      if (formDisplayOrder) body.displayOrder = parseInt(formDisplayOrder);
-      if (filterObj) body.filterCriteria = filterObj;
-
-      const response = await fetch(`${API_URL}/dashboard/metrics/${selectedMetric.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al actualizar métrica");
-      }
-
-      toast.success("Métrica actualizada exitosamente");
-      setShowEditDialog(false);
-      setSelectedMetric(null);
-      resetForm();
-      fetchMetrics();
-    } catch (error) {
-      console.error("Error updating metric:", error);
-      toast.error(error instanceof Error ? error.message : "Error al actualizar la métrica");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedMetric?.id) return;
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(`${API_URL}/dashboard/metrics/${selectedMetric.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al eliminar métrica");
-      }
-
-      toast.success("Métrica eliminada exitosamente");
-      setShowDeleteDialog(false);
-      setSelectedMetric(null);
-      fetchMetrics();
-    } catch (error) {
-      console.error("Error deleting metric:", error);
-      toast.error(error instanceof Error ? error.message : "Error al eliminar la métrica");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const openEditDialog = (metric: DashboardMetric) => {
-    setSelectedMetric(metric);
-    setFormName(metric.name);
-    setFormKey(metric.key);
-    setFormIcon(metric.icon || "");
-    parseFilterToFormFields(metric.filterCriteria);
-    setFormDisplayOrder(metric.displayOrder?.toString() || "");
-    setFormIsActive(metric.isActive ?? true);
-    setShowEditDialog(true);
-  };
-
-  const openDeleteDialog = (metric: DashboardMetric) => {
-    setSelectedMetric(metric);
-    setShowDeleteDialog(true);
-  };
+  const {
+    metrics,
+    filterOptions,
+    isLoading,
+    isSubmitting,
+    showCreateDialog,
+    setShowCreateDialog,
+    showEditDialog,
+    setShowEditDialog,
+    showDeleteDialog,
+    setShowDeleteDialog,
+    selectedMetric,
+    formName,
+    setFormName,
+    formKey,
+    setFormKey,
+    formIcon,
+    setFormIcon,
+    formDisplayOrder,
+    setFormDisplayOrder,
+    formIsActive,
+    setFormIsActive,
+    filterField,
+    setFilterField,
+    filterOperator,
+    setFilterOperator,
+    filterValue,
+    setFilterValue,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+    resetForm,
+    renderFilterDisplay,
+  } = useMetricsManager();
 
   if (isLoading) {
     return (
@@ -492,9 +209,9 @@ export default function MetricsManager() {
               
               <div>
                 <Label htmlFor="create-filter-field">Campo a Filtrar</Label>
-                <Select value={formFilterField} onValueChange={(val) => {
-                  setFormFilterField(val);
-                  setFormFilterValue(""); // Reset value when field changes
+                <Select value={filterField} onValueChange={(val) => {
+                  setFilterField(val);
+                  setFilterValue("");
                 }}>
                   <SelectTrigger id="create-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />
@@ -508,11 +225,11 @@ export default function MetricsManager() {
                 </Select>
               </div>
 
-              {formFilterField && (
+              {filterField && (
                 <div>
                   <Label htmlFor="create-filter-value">Valor</Label>
-                  {formFilterField === "statusId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "statusId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="create-filter-value">
                         <SelectValue placeholder="Selecciona un estado" />
                       </SelectTrigger>
@@ -525,8 +242,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "lastManagementId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "lastManagementId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="create-filter-value">
                         <SelectValue placeholder="Selecciona una gestión" />
                       </SelectTrigger>
@@ -539,8 +256,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "country" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "country" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="create-filter-value">
                         <SelectValue placeholder="Selecciona un país" />
                       </SelectTrigger>
@@ -553,8 +270,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "groupId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "groupId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="create-filter-value">
                         <SelectValue placeholder="Selecciona un grupo" />
                       </SelectTrigger>
@@ -594,7 +311,7 @@ export default function MetricsManager() {
             <Button variant="outline" onClick={() => {
               setShowCreateDialog(false);
               resetForm();
-            }}>
+            }} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button onClick={handleCreate} disabled={isSubmitting}>
@@ -641,9 +358,9 @@ export default function MetricsManager() {
               
               <div>
                 <Label htmlFor="edit-filter-field">Campo a Filtrar</Label>
-                <Select value={formFilterField} onValueChange={(val) => {
-                  setFormFilterField(val);
-                  setFormFilterValue(""); // Reset value when field changes
+                <Select value={filterField} onValueChange={(val) => {
+                  setFilterField(val);
+                  setFilterValue("");
                 }}>
                   <SelectTrigger id="edit-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />
@@ -657,11 +374,11 @@ export default function MetricsManager() {
                 </Select>
               </div>
 
-              {formFilterField && (
+              {filterField && (
                 <div>
                   <Label htmlFor="edit-filter-value">Valor</Label>
-                  {formFilterField === "statusId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "statusId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="edit-filter-value">
                         <SelectValue placeholder="Selecciona un estado" />
                       </SelectTrigger>
@@ -674,8 +391,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "lastManagementId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "lastManagementId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="edit-filter-value">
                         <SelectValue placeholder="Selecciona una gestión" />
                       </SelectTrigger>
@@ -688,8 +405,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "country" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "country" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="edit-filter-value">
                         <SelectValue placeholder="Selecciona un país" />
                       </SelectTrigger>
@@ -702,8 +419,8 @@ export default function MetricsManager() {
                       </SelectContent>
                     </Select>
                   )}
-                  {formFilterField === "groupId" && (
-                    <Select value={formFilterValue} onValueChange={setFormFilterValue}>
+                  {filterField === "groupId" && (
+                    <Select value={filterValue} onValueChange={setFilterValue}>
                       <SelectTrigger id="edit-filter-value">
                         <SelectValue placeholder="Selecciona un grupo" />
                       </SelectTrigger>
@@ -741,9 +458,8 @@ export default function MetricsManager() {
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setShowEditDialog(false);
-              setSelectedMetric(null);
               resetForm();
-            }}>
+            }} disabled={isSubmitting}>
               Cancelar
             </Button>
             <Button onClick={handleEdit} disabled={isSubmitting}>
@@ -763,7 +479,7 @@ export default function MetricsManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSelectedMetric(null)}>
+            <AlertDialogCancel disabled={isSubmitting}>
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isSubmitting}>

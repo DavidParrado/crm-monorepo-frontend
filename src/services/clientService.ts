@@ -1,6 +1,6 @@
 import { http } from "@/lib/http";
 import { Client } from "@/types/client";
-import { DashboardMetric } from "@/types/metric";
+import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
 import { PaginatedResponse } from "@/types/api";
 import { FilterOptions } from "@/types/filters";
 
@@ -84,4 +84,22 @@ export const rejectConversion = (id: number): Promise<Client> => {
 
 export const cancelProposal = (id: number): Promise<Client> => {
   return http.post<Client, {}>(`clients/${id}/cancel-proposal`, {});
+};
+
+// --- Metrics ---
+
+export const getMetrics = (): Promise<DashboardMetric[]> => {
+  return http.get<DashboardMetric[]>("dashboard/metrics");
+};
+
+export const createMetric = (data: CreateMetricDto): Promise<DashboardMetric> => {
+  return http.post<DashboardMetric, CreateMetricDto>("dashboard/metrics", data);
+};
+
+export const updateMetric = (id: number, data: UpdateMetricDto): Promise<DashboardMetric> => {
+  return http.patch<DashboardMetric, UpdateMetricDto>(`dashboard/metrics/${id}`, data);
+};
+
+export const deleteMetric = (id: number): Promise<void> => {
+  return http.del<void>(`dashboard/metrics/${id}`);
 };

@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,153 +28,29 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Status } from "@/types/status";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
+import { useStatusesManager } from "@/hooks/useStatusesManager";
 
 export default function StatusesManager() {
-  const { token } = useAuthStore();
-  const [statuses, setStatuses] = useState<Status[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
-  const [formData, setFormData] = useState({ name: "" });
-  const { toast } = useToast();
+  const {
+    statuses,
+    isLoading,
+    isCreateOpen,
+    setIsCreateOpen,
+    isEditOpen,
+    setIsEditOpen,
+    isDeleteOpen,
+    setIsDeleteOpen,
+    formData,
+    setFormData,
+    isSubmitting,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    openEditDialog,
+    openDeleteDialog,
+  } = useStatusesManager();
 
-  useEffect(() => {
-    fetchStatuses();
-  }, []);
-
-  const fetchStatuses = async () => {
-    try {
-      const response = await fetch(`${API_URL}/client-statuses`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      });
-      if (!response.ok) throw new Error("Error al cargar estados");
-      const data = await response.json();
-      setStatuses(data);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los estados",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreate = async () => {
-    if (!formData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre es requerido",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/client-statuses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error("Error al crear estado");
-
-      toast({
-        title: "Éxito",
-        description: "Estado creado correctamente",
-      });
-
-      setIsCreateOpen(false);
-      setFormData({ name: "" });
-      fetchStatuses();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo crear el estado",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!selectedStatus || !formData.name.trim()) return;
-
-    try {
-      const response = await fetch(`${API_URL}/client-statuses/${selectedStatus.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error("Error al actualizar estado");
-
-      toast({
-        title: "Éxito",
-        description: "Estado actualizado correctamente",
-      });
-
-      setIsEditOpen(false);
-      setSelectedStatus(null);
-      setFormData({ name: "" });
-      fetchStatuses();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo actualizar el estado",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!selectedStatus) return;
-
-    try {
-      const response = await fetch(`${API_URL}/client-statuses/${selectedStatus.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error("Error al eliminar estado");
-
-      toast({
-        title: "Éxito",
-        description: "Estado eliminado correctamente",
-      });
-
-      setIsDeleteOpen(false);
-      setSelectedStatus(null);
-      fetchStatuses();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo eliminar el estado",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const openEditDialog = (status: Status) => {
-    setSelectedStatus(status);
-    setFormData({ name: status.name });
-    setIsEditOpen(true);
-  };
-
-  const openDeleteDialog = (status: Status) => {
-    setSelectedStatus(status);
-    setIsDeleteOpen(true);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return <div>Cargando...</div>;
   }
 
@@ -243,10 +118,12 @@ export default function StatusesManager() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button onClick={handleCreate}>Crear</Button>
+            <Button onClick={handleCreate} disabled={isSubmitting}>
+              {isSubmitting ? "Creando..." : "Crear"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -272,10 +149,12 @@ export default function StatusesManager() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button onClick={handleEdit}>Guardar</Button>
+            <Button onClick={handleEdit} disabled={isSubmitting}>
+              {isSubmitting ? "Guardando..." : "Guardar"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -290,8 +169,10 @@ export default function StatusesManager() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Eliminar</AlertDialogAction>
+            <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={isSubmitting}>
+              {isSubmitting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
