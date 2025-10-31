@@ -73,13 +73,28 @@ export const useMetricsManager = () => {
     // Default to "equals" operator if not specified
     const operator = filterOperator || "equals";
     
+    // Fields that should be converted to numbers
+    const numericFields = ["statusId", "lastManagementId", "groupId"];
+    
     if (operator === "equals") {
-      filterCriteria[filterField] = filterValue;
+      // Convert to number for numeric fields
+      const value = numericFields.includes(filterField) 
+        ? Number(filterValue) 
+        : filterValue;
+      filterCriteria[filterField] = value;
     } else if (operator === "in") {
-      filterCriteria[filterField] = { $in: filterValue.split(",").map(v => v.trim()) };
+      const values = filterValue.split(",").map(v => v.trim());
+      // Convert to numbers for numeric fields
+      const processedValues = numericFields.includes(filterField)
+        ? values.map(v => Number(v))
+        : values;
+      filterCriteria[filterField] = { $in: processedValues };
     } else if (operator === "between") {
       const [start, end] = filterValue.split(",").map(v => v.trim());
-      filterCriteria[filterField] = { $gte: start, $lte: end };
+      // Convert to numbers for numeric fields
+      const processedStart = numericFields.includes(filterField) ? Number(start) : start;
+      const processedEnd = numericFields.includes(filterField) ? Number(end) : end;
+      filterCriteria[filterField] = { $gte: processedStart, $lte: processedEnd };
     }
     
     return filterCriteria;
