@@ -1,17 +1,48 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { UserTable } from "@/components/users/UserTable";
 import { CreateUserModal } from "@/components/users/CreateUserModal";
+import { EditUserModal } from "@/components/users/EditUserModal";
+import { ResetPasswordModal } from "@/components/users/ResetPasswordModal";
+import { DeleteUserDialog } from "@/components/users/DeleteUserDialog";
+import { useUserTable } from "@/hooks/useUserTable";
+import { useState } from "react";
 
 export default function Users() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const {
+    users,
+    total,
+    currentPage,
+    totalPages,
+    search,
+    loading,
+    editingUser,
+    setEditingUser,
+    resetPasswordUser,
+    setResetPasswordUser,
+    deletingUser,
+    setDeletingUser,
+    isDeleting,
+    handleSearchChange,
+    handlePageChange,
+    handleDelete,
+    refetchUsers,
+  } = useUserTable();
 
   const handleUserCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
+    refetchUsers();
     setIsCreateModalOpen(false);
+  };
+
+  const handleUserUpdated = () => {
+    refetchUsers();
+    setEditingUser(null);
+  };
+
+  const handlePasswordReset = () => {
+    setResetPasswordUser(null);
   };
 
   return (
@@ -34,7 +65,19 @@ export default function Users() {
           <CardTitle>Usuarios del Sistema</CardTitle>
         </CardHeader>
         <CardContent>
-          <UserTable key={refreshTrigger} onUserUpdated={() => setRefreshTrigger(prev => prev + 1)} />
+          <UserTable
+            users={users}
+            total={total}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            search={search}
+            loading={loading}
+            onSearchChange={handleSearchChange}
+            onPageChange={handlePageChange}
+            onEdit={setEditingUser}
+            onResetPassword={setResetPasswordUser}
+            onDelete={setDeletingUser}
+          />
         </CardContent>
       </Card>
 
@@ -43,6 +86,34 @@ export default function Users() {
         onOpenChange={setIsCreateModalOpen}
         onUserCreated={handleUserCreated}
       />
+
+      {editingUser && (
+        <EditUserModal
+          user={editingUser}
+          open={!!editingUser}
+          onOpenChange={(open) => !open && setEditingUser(null)}
+          onUserUpdated={handleUserUpdated}
+        />
+      )}
+
+      {resetPasswordUser && (
+        <ResetPasswordModal
+          user={resetPasswordUser}
+          open={!!resetPasswordUser}
+          onOpenChange={(open) => !open && setResetPasswordUser(null)}
+          onPasswordReset={handlePasswordReset}
+        />
+      )}
+
+      {deletingUser && (
+        <DeleteUserDialog
+          user={deletingUser}
+          open={!!deletingUser}
+          onOpenChange={(open) => !open && setDeletingUser(null)}
+          onConfirm={handleDelete}
+          loading={isDeleting}
+        />
+      )}
     </div>
   );
 }

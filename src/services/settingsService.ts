@@ -2,6 +2,7 @@ import { http } from "@/lib/http";
 import { Group } from "@/types/group";
 import { Status } from "@/types/status";
 import { Management } from "@/types/management";
+import { Role } from "@/types/role";
 
 // --- Groups ---
 export const getGroups = (): Promise<Group[]> => {
@@ -52,4 +53,9 @@ export const updateManagement = (id: number, data: { name: string; groupId: numb
 
 export const deleteManagement = (id: number): Promise<void> => {
   return http.del<void>(`managements/${id}`);
+};
+
+// --- Roles ---
+export const getRoles = (): Promise<Role[]> => {
+  return http.get<Role[]>("roles");
 };

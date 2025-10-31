@@ -1,6 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
-import { User, Role } from "@/types/user";
-import { Group } from "@/types/group";
+import { User } from "@/types/user";
 import { RoleEnum } from "@/types/role";
 import {
   Table,
@@ -13,91 +11,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Edit, Key, Search, Trash2 } from "lucide-react";
-import { EditUserModal } from "./EditUserModal";
-import { ResetPasswordModal } from "./ResetPasswordModal";
-import { DeleteUserDialog } from "./DeleteUserDialog";
-import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { API_URL } from "@/lib/constants";
-import { useAuthStore } from "@/store/authStore";
-
-interface UsersResponse {
-  data: User[];
-  total: number;
-}
 
 interface UserTableProps {
-  onUserUpdated: () => void;
+  users: User[];
+  total: number;
+  currentPage: number;
+  totalPages: number;
+  search: string;
+  loading: boolean;
+  onSearchChange: (value: string) => void;
+  onPageChange: (page: number) => void;
+  onEdit: (user: User) => void;
+  onResetPassword: (user: User) => void;
+  onDelete: (user: User) => void;
 }
 
-export function UserTable({ onUserUpdated }: UserTableProps) {
-  const { token } = useAuthStore();
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
-  const [deletingUser, setDeletingUser] = useState<User | null>(null);
-
-  const limit = 10;
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: limit.toString(),
-      });
-
-      if (debouncedSearch) {
-        params.append("search", debouncedSearch);
-      }
-
-      const response = await fetch(`${API_URL}/users?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error("Error al cargar usuarios");
-
-      const data: UsersResponse = await response.json();
-      const totalPages = Math.ceil(data.total / limit);
-      setUsers(data.data);
-      setTotal(data.total);
-      setTotalPages(totalPages);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "No se pudieron cargar los usuarios",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(search);
-      setCurrentPage(1);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [search]);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, debouncedSearch]);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-  };
-
+export function UserTable({
+  users,
+  total,
+  currentPage,
+  totalPages,
+  search,
+  loading,
+  onSearchChange,
+  onPageChange,
+  onEdit,
+  onResetPassword,
+  onDelete,
+}: UserTableProps) {
   const getRoleBadgeVariant = (roleName: string) => {
     switch (roleName) {
       case RoleEnum.Admin:
@@ -142,7 +84,7 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
           <Input
             placeholder="Buscar por nombre o usuario..."
             value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
@@ -194,21 +136,21 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEditingUser(user)}
+                        onClick={() => onEdit(user)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setResetPasswordUser(user)}
+                        onClick={() => onResetPassword(user)}
                       >
                         <Key className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setDeletingUser(user)}
+                        onClick={() => onDelete(user)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -230,7 +172,7 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               Anterior
@@ -245,7 +187,7 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
                   key={page}
                   variant={currentPage === page ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setCurrentPage(page as number)}
+                  onClick={() => onPageChange(page as number)}
                 >
                   {page}
                 </Button>
@@ -254,46 +196,13 @@ export function UserTable({ onUserUpdated }: UserTableProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
             >
               Siguiente
             </Button>
           </div>
         </div>
-      )}
-
-      {editingUser && (
-        <EditUserModal
-          user={editingUser}
-          open={!!editingUser}
-          onOpenChange={(open) => !open && setEditingUser(null)}
-          onUserUpdated={() => {
-            onUserUpdated();
-            setEditingUser(null);
-          }}
-        />
-      )}
-
-      {resetPasswordUser && (
-        <ResetPasswordModal
-          user={resetPasswordUser}
-          open={!!resetPasswordUser}
-          onOpenChange={(open) => !open && setResetPasswordUser(null)}
-          onPasswordReset={() => setResetPasswordUser(null)}
-        />
-      )}
-
-      {deletingUser && (
-        <DeleteUserDialog
-          user={deletingUser}
-          open={!!deletingUser}
-          onOpenChange={(open) => !open && setDeletingUser(null)}
-          onUserDeleted={() => {
-            onUserUpdated();
-            setDeletingUser(null);
-          }}
-        />
       )}
     </div>
   );

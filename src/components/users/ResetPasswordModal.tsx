@@ -1,7 +1,3 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
   Dialog,
   DialogContent,
@@ -19,19 +15,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
 import { User } from "@/types/user";
 import { AlertCircle } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
-import { API_URL } from "@/lib/constants";
-
-const formSchema = z.object({
-  newPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  confirmPassword: z.string(),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Las contraseñas no coinciden",
-  path: ["confirmPassword"],
-});
+import { useResetPasswordForm } from "@/hooks/useResetPasswordForm";
 
 interface ResetPasswordModalProps {
   user: User;
@@ -46,48 +32,7 @@ export function ResetPasswordModal({
   onOpenChange,
   onPasswordReset,
 }: ResetPasswordModalProps) {
-  const { token } = useAuthStore();
-  const [loading, setLoading] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/users/${user.id}/password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-        body: JSON.stringify({ newPassword: values.newPassword }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Error al resetear contraseña");
-      }
-
-      toast({
-        title: "Contraseña actualizada",
-        description: `La contraseña de ${user.username} se ha actualizado exitosamente`,
-      });
-
-      form.reset();
-      onPasswordReset();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "No se pudo actualizar la contraseña",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { form, loading, onSubmit } = useResetPasswordForm({ user, onSuccess: onPasswordReset });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -108,7 +53,7 @@ export function ResetPasswordModal({
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="newPassword"
