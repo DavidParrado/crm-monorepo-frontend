@@ -1,20 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '@/types/user';
+import * as authService from '@/services/authService';
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   checkAuth: () => Promise<void>;
 }
-
-// API base URL - ajustar según tu backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -27,18 +25,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (username: string, password: string) => {
         set({ isLoading: true });
         try {
-          const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Error al iniciar sesión');
-          }
-
-          const data = await response.json();
+          const data = await authService.login({ username, password });
 
           set({
             token: data.access_token,
@@ -74,17 +61,7 @@ export const useAuthStore = create<AuthState>()(
         }
 
         try {
-          const response = await fetch(`${API_URL}/auth/profile`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Token inválido');
-          }
-
-          const user = await response.json();
+          const user = await authService.getProfile();
           set({ user, isAuthenticated: true });
         } catch (error) {
           set({ user: null, token: null, isAuthenticated: false });
