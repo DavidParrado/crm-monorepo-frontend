@@ -24,6 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuthStore } from "@/store/authStore";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { capitalize } from "@/lib/utils";
@@ -44,12 +45,13 @@ const adminItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { user, logout } = useAuthStore();
+  const { logout } = useAuthStore();
+  const { user, role } = useAuthRoles();
   const isCollapsed = state === "collapsed";
 
   const canAccessRoute = (routeRoles: string[]) => {
-    if (!user || !user.role) return false;
-    return user && routeRoles.includes(user.role.name);
+    if (!role) return false;
+    return routeRoles.includes(role);
   };
 
   const getInitials = () => {
@@ -98,7 +100,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user?.role.name === RoleEnum.Admin && (
+        {role === RoleEnum.Admin && (
           <SidebarGroup className="px-2">
             <SidebarGroupLabel>
               Administración

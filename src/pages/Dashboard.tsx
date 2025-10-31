@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Filter } from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
-import { RoleEnum } from "@/types/role";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
 import { toast } from "sonner";
 import { useClients } from "@/hooks/useClients";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -23,8 +22,12 @@ import { BulkDeleteDialog } from "@/components/dashboard/BulkDeleteDialog";
 
 
 export default function Dashboard() {
-  const { user, token } = useAuthStore();
+  const { isAdmin, isTeamLeader } = useAuthRoles();
   const navigate = useNavigate();
+
+  // Role-based permissions
+  const canFilterByUser = isAdmin || isTeamLeader;
+  const canFilterByGroup = isAdmin;
 
   // Custom hooks for data management
   const {
@@ -87,11 +90,6 @@ export default function Dashboard() {
     }
   };
 
-  // Role-based permissions
-  const userRole = user?.role?.name as RoleEnum;
-  const canFilterByUser = userRole === RoleEnum.Admin || userRole === RoleEnum.TeamLeader;
-  const canFilterByGroup = userRole === RoleEnum.Admin;
-  const isAdmin = userRole === RoleEnum.Admin;
 
   // Handle stat card click
   const handleStatClick = (filter: Record<string, any>) => {

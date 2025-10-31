@@ -4,12 +4,10 @@ import GroupsManager from "@/components/settings/GroupsManager";
 import StatusesManager from "@/components/settings/StatusesManager";
 import ManagementsManager from "@/components/settings/ManagementsManager";
 import MetricsManager from "@/components/settings/MetricsManager";
-import { useAuthStore } from "@/store/authStore";
-import { RoleEnum } from "@/types/role";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
 
 export default function Settings() {
-  const { user } = useAuthStore();
-  const isAdmin = user?.role?.name === RoleEnum.Admin;
+  const { isAdmin } = useAuthRoles();
 
   return (
     <div className="space-y-6 animate-fade-in">

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
+import { StatusEnum } from "@/types/status";
 import { toast } from "sonner";
 import { ClientInfo } from "@/components/client/ClientInfo";
 import { ClientNotes } from "@/components/client/ClientNotes";
@@ -14,7 +15,7 @@ import { initiateCall } from "@/services/asteriskService";
 export default function ClientDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, isAdmin, isTeamLeader, isAgent } = useAuthRoles();
   const [isCalling, setIsCalling] = useState(false);
 
   const {
@@ -47,17 +48,14 @@ export default function ClientDetail() {
   };
 
   // Lógica para determinar qué botones mostrar
-  const isAdmin = user?.role?.name === 'Admin';
-  const isTeamLeader = user?.role?.name === 'TeamLeader';
-  const isAgent = user?.role?.name === 'Agent';
   const isAssignedToCurrentUser = client?.assignedToUserId === user?.id;
   const isAssignedToTeamMember = isTeamLeader && client?.assignedTo?.teamLeaderId === user?.id;
 
   const statusName = client?.status?.name;
-  const canProposeConversion = statusName === 'Asignado' && (isAgent || isTeamLeader || isAdmin);
-  const canConfirmConversion = statusName === 'Pendiente de Verificación' && isAdmin;
-  const canRejectConversion = statusName === 'Pendiente de Verificación' && isAdmin;
-  const canCancelProposal = statusName === 'Pendiente de Verificación' && (
+  const canProposeConversion = statusName === StatusEnum.Asignado && (isAgent || isTeamLeader || isAdmin);
+  const canConfirmConversion = statusName === StatusEnum.PendienteDeVerificacion && isAdmin;
+  const canRejectConversion = statusName === StatusEnum.PendienteDeVerificacion && isAdmin;
+  const canCancelProposal = statusName === StatusEnum.PendienteDeVerificacion && (
     isAdmin ||
     (isAgent && isAssignedToCurrentUser) ||
     (isTeamLeader && isAssignedToTeamMember)
