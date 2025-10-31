@@ -66,8 +66,6 @@ export default function MetricsManager() {
     setFormIsActive,
     filterField,
     setFilterField,
-    filterOperator,
-    setFilterOperator,
     filterValue,
     setFilterValue,
     handleCreate,
@@ -212,7 +210,6 @@ export default function MetricsManager() {
                 <Select value={filterField} onValueChange={(val) => {
                   setFilterField(val);
                   setFilterValue("");
-                  setFilterOperator("equals");
                 }}>
                   <SelectTrigger id="create-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />
@@ -220,7 +217,6 @@ export default function MetricsManager() {
                   <SelectContent>
                     <SelectItem value="statusId">Estado del Cliente</SelectItem>
                     <SelectItem value="lastManagementId">Última Gestión</SelectItem>
-                    <SelectItem value="country">País</SelectItem>
                     <SelectItem value="groupId">Grupo</SelectItem>
                   </SelectContent>
                 </Select>
@@ -252,20 +248,6 @@ export default function MetricsManager() {
                         {filterOptions.managements?.map((management) => (
                           <SelectItem key={management.id} value={management.id.toString()}>
                             {management.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {filterField === "country" && (
-                    <Select value={filterValue} onValueChange={setFilterValue}>
-                      <SelectTrigger id="create-filter-value">
-                        <SelectValue placeholder="Selecciona un país" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filterOptions.countries?.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -362,7 +344,6 @@ export default function MetricsManager() {
                 <Select value={filterField} onValueChange={(val) => {
                   setFilterField(val);
                   setFilterValue("");
-                  setFilterOperator("equals");
                 }}>
                   <SelectTrigger id="edit-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />
@@ -370,7 +351,6 @@ export default function MetricsManager() {
                   <SelectContent>
                     <SelectItem value="statusId">Estado del Cliente</SelectItem>
                     <SelectItem value="lastManagementId">Última Gestión</SelectItem>
-                    <SelectItem value="country">País</SelectItem>
                     <SelectItem value="groupId">Grupo</SelectItem>
                   </SelectContent>
                 </Select>
@@ -402,20 +382,6 @@ export default function MetricsManager() {
                         {filterOptions.managements?.map((management) => (
                           <SelectItem key={management.id} value={management.id.toString()}>
                             {management.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                  {filterField === "country" && (
-                    <Select value={filterValue} onValueChange={setFilterValue}>
-                      <SelectTrigger id="edit-filter-value">
-                        <SelectValue placeholder="Selecciona un país" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {filterOptions.countries?.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
                           </SelectItem>
                         ))}
                       </SelectContent>

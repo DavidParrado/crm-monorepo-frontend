@@ -25,7 +25,6 @@ export const useMetricsManager = () => {
   
   // Filter states
   const [filterField, setFilterField] = useState<string>("");
-  const [filterOperator, setFilterOperator] = useState<string>("");
   const [filterValue, setFilterValue] = useState<string>("");
 
   const fetchMetrics = async () => {
@@ -61,46 +60,19 @@ export const useMetricsManager = () => {
     setFormDisplayOrder("");
     setFormIsActive(true);
     setFilterField("");
-    setFilterOperator("");
     setFilterValue("");
   };
 
-  const buildFilterObject = (): Record<string, any> => {
+  const buildFilterObject = (): Record<string, number> => {
     if (!filterField || !filterValue) return {};
     
-    const filterCriteria: Record<string, any> = {};
-    
-    // Default to "equals" operator if not specified
-    const operator = filterOperator || "equals";
-    
-    // Fields that should be converted to numbers
-    const numericFields = ["statusId", "lastManagementId", "groupId"];
-    
-    if (operator === "equals") {
-      // Convert to number for numeric fields
-      const value = numericFields.includes(filterField) 
-        ? Number(filterValue) 
-        : filterValue;
-      filterCriteria[filterField] = value;
-    } else if (operator === "in") {
-      const values = filterValue.split(",").map(v => v.trim());
-      // Convert to numbers for numeric fields
-      const processedValues = numericFields.includes(filterField)
-        ? values.map(v => Number(v))
-        : values;
-      filterCriteria[filterField] = { $in: processedValues };
-    } else if (operator === "between") {
-      const [start, end] = filterValue.split(",").map(v => v.trim());
-      // Convert to numbers for numeric fields
-      const processedStart = numericFields.includes(filterField) ? Number(start) : start;
-      const processedEnd = numericFields.includes(filterField) ? Number(end) : end;
-      filterCriteria[filterField] = { $gte: processedStart, $lte: processedEnd };
-    }
-    
-    return filterCriteria;
+    // All fields are numeric IDs
+    return {
+      [filterField]: Number(filterValue)
+    };
   };
 
-  const parseFilterToFormFields = (filterCriteria: Record<string, any>) => {
+  const parseFilterToFormFields = (filterCriteria: Record<string, number>) => {
     if (!filterCriteria || Object.keys(filterCriteria).length === 0) {
       return;
     }
@@ -109,19 +81,7 @@ export const useMetricsManager = () => {
     const value = filterCriteria[field];
 
     setFilterField(field);
-
-    if (typeof value === "object" && value !== null) {
-      if (value.$in) {
-        setFilterOperator("in");
-        setFilterValue(Array.isArray(value.$in) ? value.$in.join(", ") : "");
-      } else if (value.$gte && value.$lte) {
-        setFilterOperator("between");
-        setFilterValue(`${value.$gte}, ${value.$lte}`);
-      }
-    } else {
-      setFilterOperator("equals");
-      setFilterValue(String(value));
-    }
+    setFilterValue(String(value));
   };
 
   const getFilterDisplayValue = (field: string, value: any): string => {
@@ -129,7 +89,7 @@ export const useMetricsManager = () => {
       const status = filterOptions.statuses.find(s => s.id === Number(value));
       return status?.name || value;
     }
-    if (field === "managementId" && filterOptions.managements) {
+    if (field === "lastManagementId" && filterOptions.managements) {
       const management = filterOptions.managements.find(m => m.id === Number(value));
       return management?.name || value;
     }
@@ -140,25 +100,13 @@ export const useMetricsManager = () => {
     return value;
   };
 
-  const renderFilterDisplay = (filterCriteria: Record<string, any>): string => {
+  const renderFilterDisplay = (filterCriteria: Record<string, number>): string => {
     if (!filterCriteria || Object.keys(filterCriteria).length === 0) {
       return "Sin filtro";
     }
 
     const field = Object.keys(filterCriteria)[0];
     const value = filterCriteria[field];
-
-    if (typeof value === "object" && value !== null) {
-      if (value.$in) {
-        const values = Array.isArray(value.$in) 
-          ? value.$in.map((v: any) => getFilterDisplayValue(field, v)).join(", ")
-          : "";
-        return `${field} en [${values}]`;
-      }
-      if (value.$gte && value.$lte) {
-        return `${field} entre ${getFilterDisplayValue(field, value.$gte)} y ${getFilterDisplayValue(field, value.$lte)}`;
-      }
-    }
 
     return `${field} = ${getFilterDisplayValue(field, value)}`;
   };
@@ -286,8 +234,6 @@ export const useMetricsManager = () => {
     setFormIsActive,
     filterField,
     setFilterField,
-    filterOperator,
-    setFilterOperator,
     filterValue,
     setFilterValue,
     handleCreate,
