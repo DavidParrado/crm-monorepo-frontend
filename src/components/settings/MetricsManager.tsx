@@ -208,10 +208,11 @@ export default function MetricsManager() {
               <Label className="text-base font-semibold">Condición de Filtro *</Label>
               
               <div>
-                <Label htmlFor="create-filter-field">Campo a Filtrar</Label>
+                <Label htmlFor="create-filter-field">Campo a Filtrar *</Label>
                 <Select value={filterField} onValueChange={(val) => {
                   setFilterField(val);
                   setFilterValue("");
+                  setFilterOperator("equals");
                 }}>
                   <SelectTrigger id="create-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />
@@ -357,10 +358,11 @@ export default function MetricsManager() {
               <Label className="text-base font-semibold">Condición de Filtro</Label>
               
               <div>
-                <Label htmlFor="edit-filter-field">Campo a Filtrar</Label>
+                <Label htmlFor="edit-filter-field">Campo a Filtrar *</Label>
                 <Select value={filterField} onValueChange={(val) => {
                   setFilterField(val);
                   setFilterValue("");
+                  setFilterOperator("equals");
                 }}>
                   <SelectTrigger id="edit-filter-field">
                     <SelectValue placeholder="Selecciona un campo" />

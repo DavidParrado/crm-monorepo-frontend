@@ -22,8 +22,13 @@ const getAuthHeader = () => {
 const handleResponse = async (response: Response) => {
   // 1. Check for errors
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Ocurrió un error en la solicitud");
+    try {
+      const error = await response.json();
+      throw new Error(error.message || "Ocurrió un error en la solicitud");
+    } catch (parseError) {
+      // If JSON parsing fails, throw generic error
+      throw new Error("Ocurrió un error en la solicitud");
+    }
   }
 
   // 2. Handle empty (204 No Content) responses (e.g., from a DELETE)
@@ -37,8 +42,19 @@ const handleResponse = async (response: Response) => {
     return response.blob();
   }
 
-  // 4. Handle all other JSON responses
-  return response.json();
+  // 4. Check if response has content
+  const text = await response.text();
+  if (!text || text.length === 0) {
+    return;
+  }
+
+  // 5. Parse JSON response
+  try {
+    return JSON.parse(text);
+  } catch {
+    // If not JSON, return as is
+    return text;
+  }
 };
 
 /**

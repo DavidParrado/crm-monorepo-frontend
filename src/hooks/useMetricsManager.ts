@@ -66,15 +66,18 @@ export const useMetricsManager = () => {
   };
 
   const buildFilterObject = (): Record<string, any> => {
-    if (!filterField || !filterOperator) return {};
+    if (!filterField || !filterValue) return {};
     
     const filterCriteria: Record<string, any> = {};
     
-    if (filterOperator === "equals") {
+    // Default to "equals" operator if not specified
+    const operator = filterOperator || "equals";
+    
+    if (operator === "equals") {
       filterCriteria[filterField] = filterValue;
-    } else if (filterOperator === "in") {
+    } else if (operator === "in") {
       filterCriteria[filterField] = { $in: filterValue.split(",").map(v => v.trim()) };
-    } else if (filterOperator === "between") {
+    } else if (operator === "between") {
       const [start, end] = filterValue.split(",").map(v => v.trim());
       filterCriteria[filterField] = { $gte: start, $lte: end };
     }
