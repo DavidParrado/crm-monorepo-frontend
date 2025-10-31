@@ -133,9 +133,6 @@ export const useMetricsManager = () => {
       const management = filterOptions.managements.find(m => m.id === Number(value));
       return management?.name || value;
     }
-    if (field === "country" && filterOptions.countries) {
-      return value;
-    }
     if (field === "groupId" && filterOptions.groups) {
       const group = filterOptions.groups.find(g => g.id === Number(value));
       return group?.name || value;
