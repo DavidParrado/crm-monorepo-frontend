@@ -2,15 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { Note } from "@/types/notes";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { AppPagination } from "@/components/ui/app-pagination";
 
 interface ClientNotesProps {
   notes: Note[];
@@ -68,55 +60,11 @@ export function ClientNotes({ notes, isLoading, page, totalPages, onPageChange }
 
             {totalPages > 1 && (
               <div className="mt-6">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => onPageChange(Math.max(1, page - 1))}
-                        className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                    
-                    {[...Array(Math.min(totalPages, 5))].map((_, i) => {
-                      const pageNum = i + 1;
-                      return (
-                        <PaginationItem key={pageNum}>
-                          <PaginationLink
-                            onClick={() => onPageChange(pageNum)}
-                            isActive={page === pageNum}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    })}
-                    
-                    {totalPages > 5 && (
-                      <>
-                        <PaginationItem>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                        <PaginationItem>
-                          <PaginationLink
-                            onClick={() => onPageChange(totalPages)}
-                            isActive={page === totalPages}
-                            className="cursor-pointer"
-                          >
-                            {totalPages}
-                          </PaginationLink>
-                        </PaginationItem>
-                      </>
-                    )}
-                    
-                    <PaginationItem>
-                      <PaginationNext 
-                        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-                        className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                <AppPagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={onPageChange}
+                />
               </div>
             )}
           </div>

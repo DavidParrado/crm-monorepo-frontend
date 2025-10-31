@@ -5,20 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-  PaginationEllipsis,
-} from "@/components/ui/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,14 +19,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Bell, Trash2, Clock, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Bell, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppNotification } from "@/types/notification";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
-import { cn } from "@/lib/utils";
-import { formatNotification, getNotificationTypeLabel } from "@/utils/notificationFormatter";
 import { useNotificationsPage } from "@/hooks/useNotificationsPage";
+import { NotificationRow } from "@/components/notifications/NotificationRow";
+import { AppPagination } from "@/components/ui/app-pagination";
 
 export default function Notifications() {
   const navigate = useNavigate();
@@ -75,66 +63,6 @@ export default function Notifications() {
     }
   };
   
-  const renderPaginationItems = () => {
-    const items = [];
-    const showEllipsisStart = currentPage > 3;
-    const showEllipsisEnd = currentPage < totalPages - 2;
-    
-    // Primera página
-    items.push(
-      <PaginationItem key={1}>
-        <PaginationLink
-          onClick={() => handlePageChange(1)}
-          isActive={currentPage === 1}
-        >
-          1
-        </PaginationLink>
-      </PaginationItem>
-    );
-    
-    // Elipsis inicial
-    if (showEllipsisStart) {
-      items.push(<PaginationEllipsis key="ellipsis-start" />);
-    }
-    
-    // Páginas intermedias
-    const start = Math.max(2, currentPage - 1);
-    const end = Math.min(totalPages - 1, currentPage + 1);
-    
-    for (let i = start; i <= end; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            onClick={() => handlePageChange(i)}
-            isActive={currentPage === i}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    // Elipsis final
-    if (showEllipsisEnd) {
-      items.push(<PaginationEllipsis key="ellipsis-end" />);
-    }
-    
-    // Última página (si hay más de una página)
-    if (totalPages > 1) {
-      items.push(
-        <PaginationItem key={totalPages}>
-          <PaginationLink
-            onClick={() => handlePageChange(totalPages)}
-            isActive={currentPage === totalPages}
-          >
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    return items;
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -190,87 +118,15 @@ export default function Notifications() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {notifications.map((notification) => {
-                  const formatted = formatNotification(notification);
-                  
-                  const IconComponent = 
-                    formatted.icon === 'reminder' ? Clock :
-                    formatted.icon === 'success' ? CheckCircle :
-                    formatted.icon === 'warning' ? AlertCircle :
-                    Info;
-                  
-                  const iconBgColor = 
-                    formatted.icon === 'reminder' ? "bg-primary/10" :
-                    formatted.icon === 'success' ? "bg-success/10" :
-                    formatted.icon === 'warning' ? "bg-warning/10" :
-                    "bg-info/10";
-                  
-                  const iconColor = 
-                    formatted.icon === 'reminder' ? "text-primary" :
-                    formatted.icon === 'success' ? "text-success" :
-                    formatted.icon === 'warning' ? "text-warning" :
-                    "text-info";
-                  
-                  return (
-                    <TableRow 
-                      key={notification.id}
-                      className={cn(
-                        "cursor-pointer hover:bg-accent/50",
-                        !notification.isRead && "bg-accent/30"
-                      )}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <TableCell>
-                        <div className={cn("p-2 rounded-full w-fit", iconBgColor)}>
-                          <IconComponent className={cn("h-4 w-4", iconColor)} />
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className={cn(
-                            "text-sm font-medium",
-                            !notification.isRead && "font-semibold"
-                          )}>
-                            {formatted.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {formatted.description}
-                          </p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {getNotificationTypeLabel(notification.type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {format(new Date(notification.createdAt), "PPp", {
-                          locale: es,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        {!notification.isRead ? (
-                          <Badge variant="default">No leída</Badge>
-                        ) : (
-                          <Badge variant="outline">Leída</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            confirmDelete(notification.id);
-                          }}
-                          disabled={loading}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {notifications.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onClick={handleNotificationClick}
+                    onDelete={confirmDelete}
+                    disabled={loading}
+                  />
+                ))}
               </TableBody>
             </Table>
           )}
@@ -278,25 +134,11 @@ export default function Notifications() {
       </Card>
       
       {totalPages > 1 && notifications.length > 0 && (
-        <div className="flex justify-center">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious 
-                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-              {renderPaginationItems()}
-              <PaginationItem>
-                <PaginationNext 
-                  onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+        <AppPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+        />
       )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
