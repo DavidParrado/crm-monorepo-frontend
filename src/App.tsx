@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import Imports from "./pages/Imports";
 import VoIP from "./pages/VoIP";
+import Kanban from "./pages/Kanban";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/imports" element={<Imports />} />
             <Route path="/voip" element={<VoIP />} />
+            <Route path="/kanban" element={<Kanban />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
