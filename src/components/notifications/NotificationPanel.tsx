@@ -1,163 +1,105 @@
-import { useNavigate, Link } from "react-router-dom";
-import { useNotificationStore } from "@/store/notificationStore";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { CheckCheck, Clock, ArrowRight, Bell as BellIcon, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { Bell, ExternalLink } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useNotificationStore } from "@/store/notificationStore";
+import * as notificationService from "@/services/notificationService";
+import { AppNotification } from "@/types/notification";
+import { NotificationIcon } from "./NotificationIcon";
+import { formatNotification } from "@/utils/notificationFormatter";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { formatNotification } from "@/utils/notificationFormatter";
 
 interface NotificationPanelProps {
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 export function NotificationPanel({ onClose }: NotificationPanelProps) {
   const navigate = useNavigate();
-  const { 
-    notifications, 
-    isLoading, 
-    markAsRead, 
-    markAllAsRead 
-  } = useNotificationStore();
+  const { notifications, markAsRead } = useNotificationStore();
 
-  // Las notificaciones ya se cargan en MainLayout, solo las mostramos aquí
-
-  const handleNotificationClick = async (id: number, link: string | null) => {
-    await markAsRead(id);
-    onClose?.();
-    if (link) {
-      navigate(link);
+  const handleNotificationClick = async (notification: AppNotification) => {
+    if (!notification.isRead) {
+      await notificationService.markAsRead(notification.id);
+      markAsRead(notification.id);
     }
+    
+    if (notification.link) {
+      navigate(notification.link);
+    }
+    
+    onClose();
   };
 
-  const handleMarkAllAsRead = () => {
-    markAllAsRead();
+  const handleViewAll = () => {
+    navigate("/notifications");
+    onClose();
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-4 text-center">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-      </div>
-    );
-  }
+  const recentNotifications = notifications.slice(0, 5);
 
   return (
-    <div className="flex flex-col max-h-[calc(100vh-200px)] lg:max-h-[600px]">
-      <div className="flex items-center justify-between p-4 border-b bg-background">
-        <h3 className="font-semibold text-base">Notificaciones</h3>
-        {notifications.some((n) => !n.isRead) && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMarkAllAsRead}
-            className="text-xs h-8"
-          >
-            <CheckCheck className="h-4 w-4 mr-1" />
-            Marcar todas como leídas
-          </Button>
-        )}
+    <div className="w-full">
+      <div className="flex items-center justify-between p-4 border-b">
+        <h3 className="font-semibold text-sm">Notificaciones</h3>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleViewAll}
+          className="h-8 text-xs"
+        >
+          Ver todas
+          <ExternalLink className="ml-1 h-3 w-3" />
+        </Button>
       </div>
 
-      {notifications.length === 0 ? (
-        <div className="p-8 text-center text-muted-foreground">
-          <Bell className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No tienes notificaciones</p>
-        </div>
-      ) : (
-        <>
-          <div className="divide-y overflow-y-auto flex-1">
-            {notifications.slice(0, 5).map((notification) => {
+      <ScrollArea className="h-[400px]">
+        {recentNotifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Bell className="h-10 w-10 mb-3 opacity-30" />
+            <p className="text-sm">No hay notificaciones</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {recentNotifications.map((notification) => {
               const formatted = formatNotification(notification);
               
-              const IconComponent = 
-                formatted.icon === 'reminder' ? Clock :
-                formatted.icon === 'success' ? CheckCircle :
-                formatted.icon === 'warning' ? AlertCircle :
-                Info;
-              
-              const iconBgColor = 
-                formatted.icon === 'reminder' ? "bg-primary/10" :
-                formatted.icon === 'success' ? "bg-success/10" :
-                formatted.icon === 'warning' ? "bg-warning/10" :
-                "bg-info/10";
-              
-              const iconColor = 
-                formatted.icon === 'reminder' ? "text-primary" :
-                formatted.icon === 'success' ? "text-success" :
-                formatted.icon === 'warning' ? "text-warning" :
-                "text-info";
-              
               return (
-                <button
+                <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification.id, notification.link)}
                   className={cn(
-                    "w-full text-left p-4 hover:bg-accent/50 transition-colors",
+                    "p-4 hover:bg-accent/50 cursor-pointer transition-colors",
                     !notification.isRead && "bg-accent/30"
                   )}
+                  onClick={() => handleNotificationClick(notification)}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className={cn("mt-1 p-1.5 rounded-full", iconBgColor)}>
-                      <IconComponent className={cn("h-4 w-4", iconColor)} />
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <NotificationIcon iconType={formatted.icon} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={cn(
-                        "text-sm font-medium mb-1",
+                        "text-sm",
                         !notification.isRead && "font-semibold"
                       )}>
                         {formatted.title}
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                         {formatted.description}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {format(new Date(notification.createdAt), "PPp", {
-                          locale: es,
-                        })}
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {format(new Date(notification.createdAt), "PPp", { locale: es })}
                       </p>
                     </div>
-                    {!notification.isRead && (
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0" />
-                    )}
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
-          
-          {notifications.length > 0 && (
-            <Link 
-              to="/notifications" 
-              className="block border-t bg-background"
-              onClick={() => onClose?.()}
-            >
-              <button className="w-full p-4 text-sm font-medium hover:bg-accent/50 transition-colors flex items-center justify-center gap-2">
-                Ver Todas las Notificaciones
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </Link>
-          )}
-        </>
-      )}
+        )}
+      </ScrollArea>
     </div>
-  );
-}
-
-function Bell({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-    </svg>
   );
 }
