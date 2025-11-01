@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
-import { KanbanBoard, KanbanTask, KanbanColumn } from "@/types/kanban";
+import { KanbanBoard, KanbanTask, KanbanColumn, ColumnPagination } from "@/types/kanban";
 import * as kanbanService from "@/services/kanbanService";
 
 export const useKanban = () => {
   const [board, setBoard] = useState<KanbanBoard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<ColumnPagination>({});
 
   // Load initial board data
   useEffect(() => {
@@ -14,6 +15,18 @@ export const useKanban = () => {
         setIsLoading(true);
         const data = await kanbanService.getKanbanBoard();
         setBoard(data);
+        
+        // Initialize pagination for each column
+        const initialPagination: ColumnPagination = {};
+        Object.keys(data.columns).forEach(columnId => {
+          const column = data.columns[columnId];
+          initialPagination[columnId] = {
+            page: 1,
+            limit: 5,
+            total: column.taskIds.length,
+          };
+        });
+        setPagination(initialPagination);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load board');
       } finally {
@@ -100,16 +113,53 @@ export const useKanban = () => {
 
         return newBoard;
       });
+
+      // Update pagination total
+      setPagination(prev => ({
+        ...prev,
+        [columnId]: {
+          ...prev[columnId],
+          total: prev[columnId].total + 1,
+        },
+      }));
     } catch (err) {
       console.error('Failed to create task:', err);
     }
   }, [board]);
 
+  // Handle pagination change
+  const handlePageChange = useCallback((columnId: string, newPage: number) => {
+    setPagination(prev => ({
+      ...prev,
+      [columnId]: {
+        ...prev[columnId],
+        page: newPage,
+      },
+    }));
+  }, []);
+
+  // Get paginated tasks for a column
+  const getPaginatedTasks = useCallback((columnId: string) => {
+    if (!board || !pagination[columnId]) return [];
+    
+    const column = board.columns[columnId];
+    const { page, limit } = pagination[columnId];
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    
+    return column.taskIds
+      .slice(start, end)
+      .map(taskId => board.tasks[taskId]);
+  }, [board, pagination]);
+
   return {
     board,
     isLoading,
     error,
+    pagination,
     handleDragEnd,
     handleCreateTask,
+    handlePageChange,
+    getPaginatedTasks,
   };
 };

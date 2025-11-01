@@ -6,12 +6,12 @@ export const KANBAN_MOCK_DATA: KanbanBoard = {
     'col-1-todo': {
       id: 'col-1-todo',
       title: 'To Do',
-      taskIds: ['task-1', 'task-2'],
+      taskIds: ['task-1', 'task-2', 'task-4', 'task-5', 'task-6', 'task-7', 'task-8', 'task-9', 'task-10'],
     },
     'col-2-progress': {
       id: 'col-2-progress',
       title: 'In Progress',
-      taskIds: ['task-3'],
+      taskIds: ['task-3', 'task-11', 'task-12'],
     },
     'col-3-done': {
       id: 'col-3-done',
@@ -66,6 +66,142 @@ export const KANBAN_MOCK_DATA: KanbanBoard = {
         conversationStatus: 'none',
         unreadCount: 0,
         lastMessageTimestamp: null,
+      },
+    },
+    'task-4': {
+      id: 'task-4',
+      title: 'Review contract terms',
+      description: 'Go through the updated contract with legal team.',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-def',
+        name: 'Partner Corp',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Partner+Corp',
+      },
+      chatwootInfo: {
+        conversationStatus: 'pending',
+        unreadCount: 1,
+        lastMessageTimestamp: '2025-10-31T14:00:00Z',
+      },
+    },
+    'task-5': {
+      id: 'task-5',
+      title: 'Schedule demo call',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-ghi',
+        name: 'StartupZ',
+        avatarUrl: 'https://ui-avatars.com/api/?name=StartupZ',
+      },
+      chatwootInfo: {
+        conversationStatus: 'open',
+        unreadCount: 2,
+        lastMessageTimestamp: '2025-10-31T16:00:00Z',
+      },
+    },
+    'task-6': {
+      id: 'task-6',
+      title: 'Update pricing documentation',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-jkl',
+        name: 'Enterprise Ltd',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Enterprise+Ltd',
+      },
+      chatwootInfo: {
+        conversationStatus: 'none',
+        unreadCount: 0,
+        lastMessageTimestamp: null,
+      },
+    },
+    'task-7': {
+      id: 'task-7',
+      title: 'Prepare quarterly report',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-mno',
+        name: 'Global Inc',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Global+Inc',
+      },
+      chatwootInfo: {
+        conversationStatus: 'resolved',
+        unreadCount: 0,
+        lastMessageTimestamp: '2025-10-30T08:00:00Z',
+      },
+    },
+    'task-8': {
+      id: 'task-8',
+      title: 'Follow up on technical questions',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-pqr',
+        name: 'TechCo',
+        avatarUrl: 'https://ui-avatars.com/api/?name=TechCo',
+      },
+      chatwootInfo: {
+        conversationStatus: 'open',
+        unreadCount: 5,
+        lastMessageTimestamp: '2025-10-31T18:00:00Z',
+      },
+    },
+    'task-9': {
+      id: 'task-9',
+      title: 'Send NDA for signature',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-stu',
+        name: 'Innovations LLC',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Innovations+LLC',
+      },
+      chatwootInfo: {
+        conversationStatus: 'pending',
+        unreadCount: 0,
+        lastMessageTimestamp: '2025-10-31T12:00:00Z',
+      },
+    },
+    'task-10': {
+      id: 'task-10',
+      title: 'Discuss integration requirements',
+      columnId: 'col-1-todo',
+      client: {
+        id: 'client-vwx',
+        name: 'SystemsHub',
+        avatarUrl: 'https://ui-avatars.com/api/?name=SystemsHub',
+      },
+      chatwootInfo: {
+        conversationStatus: 'open',
+        unreadCount: 1,
+        lastMessageTimestamp: '2025-10-31T15:30:00Z',
+      },
+    },
+    'task-11': {
+      id: 'task-11',
+      title: 'Finalize migration plan',
+      columnId: 'col-2-progress',
+      client: {
+        id: 'client-yza',
+        name: 'DataFlow',
+        avatarUrl: 'https://ui-avatars.com/api/?name=DataFlow',
+      },
+      chatwootInfo: {
+        conversationStatus: 'open',
+        unreadCount: 3,
+        lastMessageTimestamp: '2025-10-31T17:00:00Z',
+      },
+    },
+    'task-12': {
+      id: 'task-12',
+      title: 'Complete onboarding checklist',
+      columnId: 'col-2-progress',
+      client: {
+        id: 'client-bcd',
+        name: 'NewClient Co',
+        avatarUrl: 'https://ui-avatars.com/api/?name=NewClient+Co',
+      },
+      chatwootInfo: {
+        conversationStatus: 'pending',
+        unreadCount: 2,
+        lastMessageTimestamp: '2025-10-31T13:00:00Z',
       },
     },
   },

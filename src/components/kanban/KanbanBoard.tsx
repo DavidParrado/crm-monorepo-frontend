@@ -8,7 +8,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { KanbanBoard as KanbanBoardType, KanbanTask } from "@/types/kanban";
+import { KanbanBoard as KanbanBoardType, KanbanTask, ColumnPagination } from "@/types/kanban";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCard } from "./KanbanCard";
 import { TaskDetailModal } from "./TaskDetailModal";
@@ -16,6 +16,7 @@ import { CreateTaskModal } from "./CreateTaskModal";
 
 interface KanbanBoardProps {
   board: KanbanBoardType;
+  pagination: ColumnPagination;
   onDragEnd: (
     taskId: string,
     sourceColumnId: string,
@@ -23,9 +24,18 @@ interface KanbanBoardProps {
     destinationIndex: number
   ) => void;
   onCreateTask: (title: string, description: string | undefined, clientId: number, columnId: string) => Promise<void>;
+  onPageChange: (columnId: string, page: number) => void;
+  getPaginatedTasks: (columnId: string) => KanbanTask[];
 }
 
-export const KanbanBoard = ({ board, onDragEnd, onCreateTask }: KanbanBoardProps) => {
+export const KanbanBoard = ({ 
+  board, 
+  pagination, 
+  onDragEnd, 
+  onCreateTask,
+  onPageChange,
+  getPaginatedTasks,
+}: KanbanBoardProps) => {
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [createTaskColumnId, setCreateTaskColumnId] = useState<string | null>(null);
@@ -99,15 +109,21 @@ export const KanbanBoard = ({ board, onDragEnd, onCreateTask }: KanbanBoardProps
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
           {board.columnOrder.map((columnId) => {
             const column = board.columns[columnId];
-            const tasks = column.taskIds.map((taskId) => board.tasks[taskId]);
+            const paginatedTasks = getPaginatedTasks(columnId);
+            const columnPagination = pagination[columnId];
+            const totalPages = Math.ceil(columnPagination.total / columnPagination.limit);
 
             return (
               <KanbanColumn
                 key={column.id}
                 column={column}
-                tasks={tasks}
+                tasks={paginatedTasks}
                 onTaskClick={handleTaskClick}
                 onCreateTask={handleOpenCreateTask}
+                currentPage={columnPagination.page}
+                totalPages={totalPages}
+                totalTasks={columnPagination.total}
+                onPageChange={(page) => onPageChange(columnId, page)}
               />
             );
           })}

@@ -41,3 +41,11 @@ export interface ChatMessage {
 export interface TaskDetail extends KanbanTask {
   chatHistory: ChatMessage[];
 }
+
+export interface ColumnPagination {
+  [columnId: string]: {
+    page: number;
+    limit: number;
+    total: number;
+  };
+}

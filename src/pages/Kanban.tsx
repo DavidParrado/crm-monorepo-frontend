@@ -3,7 +3,16 @@ import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { Loader2 } from "lucide-react";
 
 const Kanban = () => {
-  const { board, isLoading, error, handleDragEnd, handleCreateTask } = useKanban();
+  const { 
+    board, 
+    isLoading, 
+    error, 
+    pagination, 
+    handleDragEnd, 
+    handleCreateTask, 
+    handlePageChange,
+    getPaginatedTasks,
+  } = useKanban();
 
   if (isLoading) {
     return (
@@ -39,7 +48,14 @@ const Kanban = () => {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <KanbanBoard board={board} onDragEnd={handleDragEnd} onCreateTask={handleCreateTask} />
+        <KanbanBoard 
+          board={board} 
+          pagination={pagination}
+          onDragEnd={handleDragEnd} 
+          onCreateTask={handleCreateTask}
+          onPageChange={handlePageChange}
+          getPaginatedTasks={getPaginatedTasks}
+        />
       </div>
     </div>
   );
