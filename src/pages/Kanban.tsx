@@ -1,5 +1,6 @@
 import { useKanban } from "@/hooks/useKanban";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { KanbanFilters } from "@/components/kanban/KanbanFilters";
 import { Loader2 } from "lucide-react";
 
 const Kanban = () => {
@@ -12,6 +13,15 @@ const Kanban = () => {
     handleCreateTask, 
     handlePageChange,
     getPaginatedTasks,
+    // Filter controls
+    filters,
+    uniqueClients,
+    setClientFilter,
+    setChatStatusFilter,
+    setShowUnreadOnly,
+    setSearchQuery,
+    resetFilters,
+    hasActiveFilters,
   } = useKanban();
 
   if (isLoading) {
@@ -40,12 +50,23 @@ const Kanban = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold">Kanban Board</h1>
         <p className="text-muted-foreground mt-1">
           Manage your client tasks with visual workflow
         </p>
       </div>
+
+      <KanbanFilters
+        filters={filters}
+        uniqueClients={uniqueClients}
+        onClientChange={setClientFilter}
+        onChatStatusChange={setChatStatusFilter}
+        onUnreadToggle={setShowUnreadOnly}
+        onSearchChange={setSearchQuery}
+        onResetFilters={resetFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       <div className="flex-1 overflow-hidden">
         <KanbanBoard 
