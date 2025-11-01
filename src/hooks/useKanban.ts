@@ -67,10 +67,49 @@ export const useKanban = () => {
     }
   }, [board]);
 
+  // Handle task creation
+  const handleCreateTask = useCallback(async (
+    title: string,
+    description: string | undefined,
+    clientId: number,
+    columnId: string
+  ) => {
+    if (!board) return;
+
+    try {
+      const newTask = await kanbanService.createTask({
+        title,
+        description,
+        clientId,
+        columnId,
+      });
+
+      // Optimistic UI update
+      setBoard(prevBoard => {
+        if (!prevBoard) return null;
+
+        const newBoard = { ...prevBoard };
+        const column = { ...newBoard.columns[columnId] };
+
+        // Add task to tasks object
+        newBoard.tasks[newTask.id] = newTask;
+
+        // Add task ID to column
+        column.taskIds = [...column.taskIds, newTask.id];
+        newBoard.columns[columnId] = column;
+
+        return newBoard;
+      });
+    } catch (err) {
+      console.error('Failed to create task:', err);
+    }
+  }, [board]);
+
   return {
     board,
     isLoading,
     error,
     handleDragEnd,
+    handleCreateTask,
   };
 };

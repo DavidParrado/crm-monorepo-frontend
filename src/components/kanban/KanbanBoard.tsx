@@ -12,6 +12,7 @@ import { KanbanBoard as KanbanBoardType, KanbanTask } from "@/types/kanban";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCard } from "./KanbanCard";
 import { TaskDetailModal } from "./TaskDetailModal";
+import { CreateTaskModal } from "./CreateTaskModal";
 
 interface KanbanBoardProps {
   board: KanbanBoardType;
@@ -21,11 +22,13 @@ interface KanbanBoardProps {
     destinationColumnId: string,
     destinationIndex: number
   ) => void;
+  onCreateTask: (title: string, description: string | undefined, clientId: number, columnId: string) => Promise<void>;
 }
 
-export const KanbanBoard = ({ board, onDragEnd }: KanbanBoardProps) => {
+export const KanbanBoard = ({ board, onDragEnd, onCreateTask }: KanbanBoardProps) => {
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [createTaskColumnId, setCreateTaskColumnId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -68,6 +71,24 @@ export const KanbanBoard = ({ board, onDragEnd }: KanbanBoardProps) => {
     setSelectedTaskId(null);
   };
 
+  const handleOpenCreateTask = (columnId: string) => {
+    setCreateTaskColumnId(columnId);
+  };
+
+  const handleCloseCreateTask = () => {
+    setCreateTaskColumnId(null);
+  };
+
+  const handleSubmitCreateTask = async (
+    title: string,
+    description: string | undefined,
+    clientId: number
+  ) => {
+    if (createTaskColumnId) {
+      await onCreateTask(title, description, clientId, createTaskColumnId);
+    }
+  };
+
   return (
     <>
       <DndContext
@@ -86,6 +107,7 @@ export const KanbanBoard = ({ board, onDragEnd }: KanbanBoardProps) => {
                 column={column}
                 tasks={tasks}
                 onTaskClick={handleTaskClick}
+                onCreateTask={handleOpenCreateTask}
               />
             );
           })}
@@ -102,6 +124,13 @@ export const KanbanBoard = ({ board, onDragEnd }: KanbanBoardProps) => {
         taskId={selectedTaskId}
         isOpen={!!selectedTaskId}
         onClose={handleCloseModal}
+      />
+
+      <CreateTaskModal
+        isOpen={!!createTaskColumnId}
+        onClose={handleCloseCreateTask}
+        onSubmit={handleSubmitCreateTask}
+        columnTitle={createTaskColumnId ? board.columns[createTaskColumnId]?.title || "" : ""}
       />
     </>
   );

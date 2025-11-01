@@ -4,14 +4,17 @@ import { KanbanColumn as KanbanColumnType, KanbanTask } from "@/types/kanban";
 import { KanbanCard } from "./KanbanCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
   tasks: KanbanTask[];
   onTaskClick: (taskId: string) => void;
+  onCreateTask: (columnId: string) => void;
 }
 
-export const KanbanColumn = ({ column, tasks, onTaskClick }: KanbanColumnProps) => {
+export const KanbanColumn = ({ column, tasks, onTaskClick, onCreateTask }: KanbanColumnProps) => {
   const { setNodeRef } = useDroppable({
     id: column.id,
   });
@@ -19,11 +22,21 @@ export const KanbanColumn = ({ column, tasks, onTaskClick }: KanbanColumnProps) 
   return (
     <Card className="flex flex-col h-full bg-muted/50">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{column.title}</CardTitle>
-          <span className="text-sm text-muted-foreground bg-background px-2 py-1 rounded-full">
-            {tasks.length}
-          </span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-lg">{column.title}</CardTitle>
+            <span className="text-sm text-muted-foreground bg-background px-2 py-1 rounded-full">
+              {tasks.length}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={() => onCreateTask(column.id)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="flex-1 pt-0 overflow-hidden">

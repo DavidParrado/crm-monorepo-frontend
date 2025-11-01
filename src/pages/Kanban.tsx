@@ -3,7 +3,7 @@ import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { Loader2 } from "lucide-react";
 
 const Kanban = () => {
-  const { board, isLoading, error, handleDragEnd } = useKanban();
+  const { board, isLoading, error, handleDragEnd, handleCreateTask } = useKanban();
 
   if (isLoading) {
     return (
@@ -39,7 +39,7 @@ const Kanban = () => {
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <KanbanBoard board={board} onDragEnd={handleDragEnd} />
+        <KanbanBoard board={board} onDragEnd={handleDragEnd} onCreateTask={handleCreateTask} />
       </div>
     </div>
   );
