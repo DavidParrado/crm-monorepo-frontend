@@ -1,11 +1,29 @@
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Bell, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { AppNotification } from "@/types/notification";
 import { useNotificationsPage } from "@/hooks/useNotificationsPage";
-import { NotificationTable } from "@/components/notifications/NotificationTable";
-import { DeleteNotificationDialog } from "@/components/notifications/DeleteNotificationDialog";
+import { NotificationRow } from "@/components/notifications/NotificationRow";
 import { AppPagination } from "@/components/ui/app-pagination";
 
 export default function Notifications() {
@@ -55,24 +73,65 @@ export default function Notifications() {
             Gestiona todas tus notificaciones
           </p>
         </div>
-        {readNotifications.length > 0 && (
-          <Button
-            variant="outline"
-            onClick={handleDeleteRead}
-            disabled={loading}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Eliminar Leídas
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {readNotifications.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={handleDeleteRead}
+              disabled={loading}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar Leídas
+            </Button>
+          )}
+        </div>
       </div>
 
-      <NotificationTable
-        notifications={notifications}
-        onNotificationClick={handleNotificationClick}
-        onDelete={confirmDelete}
-        loading={loading}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" />
+            Todas las Notificaciones
+            {notifications.length > 0 && (
+              <Badge variant="secondary" className="ml-2">
+                {notifications.length}
+              </Badge>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {notifications.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Bell className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>No tienes notificaciones</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12"></TableHead>
+                  <TableHead>Mensaje</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {notifications.map((notification) => (
+                  <NotificationRow
+                    key={notification.id}
+                    notification={notification}
+                    onClick={handleNotificationClick}
+                    onDelete={confirmDelete}
+                    disabled={loading}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
       
       {totalPages > 1 && notifications.length > 0 && (
         <AppPagination
@@ -82,11 +141,22 @@ export default function Notifications() {
         />
       )}
 
-      <DeleteNotificationDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleDeleteConfirm}
-      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar notificación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. La notificación será eliminada permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
