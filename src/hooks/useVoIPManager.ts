@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import * as asteriskService from "@/services/asteriskService";
 import { AsteriskSettings, AsteriskStatus, UpdateAsteriskSettingsDto } from "@/types/asterisk";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/types/api-error";
 
 export const useVoIPManager = () => {
   const [settings, setSettings] = useState<AsteriskSettings | null>(null);
@@ -89,15 +90,16 @@ export const useVoIPManager = () => {
           setIsSaving(false);
           return;
         }
-        await asteriskService.createSettings(body as any);
+        await asteriskService.createSettings(body);
         toast.success("Configuración creada exitosamente");
       }
 
       await fetchSettings();
       await fetchStatus();
       setFormData(prev => ({ ...prev, password: "" }));
-    } catch (error: any) {
-      toast.error(error.message || "Error al guardar la configuración");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSaving(false);
     }

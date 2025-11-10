@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Status } from "@/types/status";
 import * as settingsService from "@/services/settingsService";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/types/api-error";
 
 export const useStatusesManager = () => {
   const [statuses, setStatuses] = useState<Status[]>([]);
@@ -18,8 +19,9 @@ export const useStatusesManager = () => {
     try {
       const data = await settingsService.getStatuses();
       setStatuses(data);
-    } catch (error: any) {
-      toast.error(error.message || "Error al cargar los estados");
+    } catch (error) {
+      console.error("Error fetching statuses:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -42,8 +44,9 @@ export const useStatusesManager = () => {
       setIsCreateOpen(false);
       setFormData({ name: "" });
       fetchStatuses();
-    } catch (error: any) {
-      toast.error(error.message || "Error al crear el estado");
+    } catch (error) {
+      console.error("Error creating status:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,8 +67,9 @@ export const useStatusesManager = () => {
       setFormData({ name: "" });
       setSelectedStatus(null);
       fetchStatuses();
-    } catch (error: any) {
-      toast.error(error.message || "Error al actualizar el estado");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -81,8 +85,9 @@ export const useStatusesManager = () => {
       setIsDeleteOpen(false);
       setSelectedStatus(null);
       fetchStatuses();
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar el estado");
+    } catch (error) {
+      console.error("Error deleting status:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -41,7 +41,7 @@ export const ImportsHistory = ({ imports, isLoading, onDelete }: ImportsHistoryP
     try {
       await onDelete(selectedImport.id);
     } catch (error) {
-      // Error handling is done in the hook
+      console.error("Error deleting import:", error);
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

@@ -3,6 +3,7 @@ import { Management } from "@/types/management";
 import { Group } from "@/types/group";
 import * as settingsService from "@/services/settingsService";
 import { toast } from "sonner";
+import { ApiError, getErrorMessage } from "@/types/api-error";
 
 export const useManagementsManager = () => {
   const [managements, setManagements] = useState<Management[]>([]);
@@ -20,8 +21,9 @@ export const useManagementsManager = () => {
     try {
       const data = await settingsService.getManagements();
       setManagements(data);
-    } catch (error: any) {
-      toast.error(error.message || "Error al cargar las gerencias");
+    } catch (error) {
+      console.error("Error fetching managements:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -31,8 +33,9 @@ export const useManagementsManager = () => {
     try {
       const data = await settingsService.getGroups();
       setGroups(data);
-    } catch (error: any) {
-      toast.error(error.message || "Error al cargar los grupos");
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      toast.error(getErrorMessage(error));
     }
   };
 
@@ -57,8 +60,9 @@ export const useManagementsManager = () => {
       setIsCreateOpen(false);
       setFormData({ name: "", groupId: null });
       fetchManagements();
-    } catch (error: any) {
-      toast.error(error.message || "Error al crear la gerencia");
+    } catch (error) {
+      console.error("Error creating management:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -82,8 +86,9 @@ export const useManagementsManager = () => {
       setFormData({ name: "", groupId: null });
       setSelectedManagement(null);
       fetchManagements();
-    } catch (error: any) {
-      toast.error(error.message || "Error al actualizar la gerencia");
+    } catch (error) {
+      console.error("Error updating management:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -99,8 +104,9 @@ export const useManagementsManager = () => {
       setIsDeleteOpen(false);
       setSelectedManagement(null);
       fetchManagements();
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar la gerencia");
+    } catch (error) {
+      console.error("Error deleting management:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Group } from "@/types/group";
 import * as settingsService from "@/services/settingsService";
 import { toast } from "sonner";
+import { ApiError, getErrorMessage } from "@/types/api-error";
 
 export const useGroupsManager = () => {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -18,8 +19,9 @@ export const useGroupsManager = () => {
     try {
       const data = await settingsService.getGroups();
       setGroups(data);
-    } catch (error: any) {
-      toast.error(error.message || "Error al cargar los grupos");
+    } catch (error) {
+      console.error("Error fetching groups:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -42,8 +44,9 @@ export const useGroupsManager = () => {
       setIsCreateOpen(false);
       setFormData({ name: "" });
       fetchGroups();
-    } catch (error: any) {
-      toast.error(error.message || "Error al crear el grupo");
+    } catch (error) {
+      console.error("Error creating group:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,8 +67,9 @@ export const useGroupsManager = () => {
       setFormData({ name: "" });
       setSelectedGroup(null);
       fetchGroups();
-    } catch (error: any) {
-      toast.error(error.message || "Error al actualizar el grupo");
+    } catch (error) {
+      console.error("Error updating group:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -81,8 +85,9 @@ export const useGroupsManager = () => {
       setIsDeleteOpen(false);
       setSelectedGroup(null);
       fetchGroups();
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar el grupo");
+    } catch (error) {
+      console.error("Error deleting group:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { User } from "@/types/user";
 import * as userService from "@/services/userService";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/types/api-error";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -36,8 +37,9 @@ export const useUserTable = () => {
       setUsers(data.data);
       setTotal(data.total);
       setTotalPages(Math.ceil(data.total / ITEMS_PER_PAGE));
-    } catch (error: any) {
-      toast.error(error.message || "No se pudieron cargar los usuarios");
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -74,8 +76,9 @@ export const useUserTable = () => {
       toast.success("Usuario eliminado exitosamente");
       setDeletingUser(null);
       fetchUsers();
-    } catch (error: any) {
-      toast.error(error.message || "Error al eliminar el usuario");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      toast.error(getErrorMessage(error));
     } finally {
       setIsDeleting(false);
     }

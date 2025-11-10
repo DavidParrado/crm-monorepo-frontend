@@ -97,6 +97,7 @@ export function useAppointmentForm({ appointment, onSuccess, open }: UseAppointm
 
       onSuccess();
     } catch (error) {
+      console.error("Error saving appointment:", error);
       toast({
         title: "Error",
         description: "No se pudo guardar la cita",

@@ -3,11 +3,12 @@ import { DynamicIcon } from "@/components/ui/dynamic-icon";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardMetric } from "@/types/metric";
+import { DashboardFilter } from "@/types/dashboard-filter";
 
 interface DashboardStatsProps {
   stats: DashboardMetric[];
   isLoading: boolean;
-  onStatClick: (filter: Record<string, any>) => void;
+  onStatClick: (filter: DashboardFilter) => void;
 }
 
 export function DashboardStats({ stats, isLoading, onStatClick }: DashboardStatsProps) {

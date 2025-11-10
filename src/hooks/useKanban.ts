@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { KanbanBoard, KanbanTask, KanbanColumn, ColumnPagination } from "@/types/kanban";
+import { KanbanBoard, KanbanColumn, ColumnPagination } from "@/types/kanban";
 import * as kanbanService from "@/services/kanbanService";
 import { useKanbanFilters } from "./useKanbanFilters";
 

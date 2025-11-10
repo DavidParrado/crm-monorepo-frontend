@@ -48,7 +48,9 @@ export const useUserForm = ({ user, open, onSuccess }: UseUserFormProps) => {
   const isEditMode = !!user;
   const schema = isEditMode ? editSchema : createSchema;
 
-  const form = useForm<z.infer<typeof schema>>({
+  type FormValues = z.infer<typeof schema>;
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: isEditMode ? {
       firstName: user.firstName,
@@ -62,12 +64,12 @@ export const useUserForm = ({ user, open, onSuccess }: UseUserFormProps) => {
       firstName: "",
       lastName: "",
       username: "",
-      password: "" as any,
+      password: "",
       roleId: "",
       groupId: "",
       ext: "",
       teamLeaderId: "",
-    } as any,
+    },
   });
 
   const selectedRoleId = form.watch("roleId");

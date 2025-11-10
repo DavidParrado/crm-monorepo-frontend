@@ -3,6 +3,7 @@ import { Client } from "@/types/client";
 import { DashboardMetric, CreateMetricDto, UpdateMetricDto } from "@/types/metric";
 import { PaginatedResponse } from "@/types/api";
 import { FilterOptions } from "@/types/filters";
+import { EmptyRequestBody } from "@/types/empty-request";
 
 // --- Dashboard Stats ---
 
@@ -71,19 +72,19 @@ export const getClientById = (id: string): Promise<Client> => {
 // --- Conversion Operations ---
 
 export const proposeConversion = (id: number): Promise<Client> => {
-  return http.post<Client, {}>(`clients/${id}/propose-conversion`, {});
+  return http.post<Client, EmptyRequestBody>(`clients/${id}/propose-conversion`, {});
 };
 
 export const confirmConversion = (id: number): Promise<Client> => {
-  return http.post<Client, {}>(`clients/${id}/confirm-conversion`, {});
+  return http.post<Client, EmptyRequestBody>(`clients/${id}/confirm-conversion`, {});
 };
 
 export const rejectConversion = (id: number): Promise<Client> => {
-  return http.post<Client, {}>(`clients/${id}/reject-conversion`, {});
+  return http.post<Client, EmptyRequestBody>(`clients/${id}/reject-conversion`, {});
 };
 
 export const cancelProposal = (id: number): Promise<Client> => {
-  return http.post<Client, {}>(`clients/${id}/cancel-proposal`, {});
+  return http.post<Client, EmptyRequestBody>(`clients/${id}/cancel-proposal`, {});
 };
 
 // --- Metrics ---

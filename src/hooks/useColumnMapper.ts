@@ -4,12 +4,11 @@ import { ImportPreview, ImportMapping, ImportUploadResponse } from "@/types/impo
 import { toast } from "sonner";
 
 interface UseColumnMapperProps {
-  preview: ImportPreview;
   file: File;
   onSuccess: (result: ImportUploadResponse) => void;
 }
 
-export const useColumnMapper = ({ preview, file, onSuccess }: UseColumnMapperProps) => {
+export const useColumnMapper = ({ file, onSuccess }: UseColumnMapperProps) => {
   const [mapping, setMapping] = useState<ImportMapping>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,6 +45,7 @@ export const useColumnMapper = ({ preview, file, onSuccess }: UseColumnMapperPro
       toast.success(`${result.successful} registros exitosos, ${result.failed} fallidos`);
       onSuccess(result);
     } catch (error) {
+      console.error("Error processing import:", error);
       toast.error("No se pudo procesar la importación");
     } finally {
       setIsSubmitting(false);

@@ -67,7 +67,6 @@ export default function Users() {
         <CardContent>
           <UserTable
             users={users}
-            total={total}
             currentPage={currentPage}
             totalPages={totalPages}
             search={search}

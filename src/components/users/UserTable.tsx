@@ -16,7 +16,6 @@ import { AppPagination } from "@/components/ui/app-pagination";
 
 interface UserTableProps {
   users: User[];
-  total: number;
   currentPage: number;
   totalPages: number;
   search: string;
@@ -30,7 +29,6 @@ interface UserTableProps {
 
 export function UserTable({
   users,
-  total,
   currentPage,
   totalPages,
   search,

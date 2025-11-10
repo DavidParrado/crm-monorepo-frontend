@@ -14,7 +14,6 @@ interface ColumnMapperProps {
 
 export const ColumnMapper = ({ preview, file, onCancel, onSuccess }: ColumnMapperProps) => {
   const { mapping, isSubmitting, handleMappingChange, handleSubmit } = useColumnMapper({
-    preview,
     file,
     onSuccess,
   });
