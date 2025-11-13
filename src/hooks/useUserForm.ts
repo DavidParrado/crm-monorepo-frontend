@@ -69,7 +69,7 @@ export const useUserForm = ({ user, open, onSuccess }: UseUserFormProps) => {
       groupId: "",
       ext: "",
       teamLeaderId: "",
-    },
+    } as FormValues,
   });
 
   const selectedRoleId = form.watch("roleId");
@@ -157,12 +157,12 @@ export const useUserForm = ({ user, open, onSuccess }: UseUserFormProps) => {
           firstName: "",
           lastName: "",
           username: "",
-          password: "" as any,
+          password: "",
           roleId: "",
           groupId: "",
           ext: "",
           teamLeaderId: "",
-        } as any);
+        } as FormValues);
       }
       
       setTeamLeaderSearch("");

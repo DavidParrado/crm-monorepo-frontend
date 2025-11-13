@@ -108,7 +108,7 @@ export function CreateUserModal({ open, onOpenChange, onUserCreated }: CreateUse
 
               <FormField
                 control={form.control}
-                name="password"
+                name={"password" as any}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Contraseña</FormLabel>

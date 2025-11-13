@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import * as asteriskService from "@/services/asteriskService";
-import { AsteriskSettings, AsteriskStatus, UpdateAsteriskSettingsDto } from "@/types/asterisk";
+import { AsteriskSettings, AsteriskStatus, UpdateAsteriskSettingsDto, CreateAsteriskSettingsDto } from "@/types/asterisk";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/types/api-error";
 
@@ -70,18 +70,18 @@ export const useVoIPManager = () => {
     setIsSaving(true);
 
     try {
-      const body: UpdateAsteriskSettingsDto = {
-        host: formData.host,
-        port: Number(formData.port),
-        username: formData.username,
-        context: formData.context,
-      };
-      
-      if (formData.password) {
-        body.password = formData.password;
-      }
-
       if (settings) {
+        const body: UpdateAsteriskSettingsDto = {
+          host: formData.host,
+          port: Number(formData.port),
+          username: formData.username,
+          context: formData.context,
+        };
+        
+        if (formData.password) {
+          body.password = formData.password;
+        }
+
         await asteriskService.updateSettings(body);
         toast.success("Configuración actualizada exitosamente");
       } else {
@@ -90,6 +90,15 @@ export const useVoIPManager = () => {
           setIsSaving(false);
           return;
         }
+        
+        const body: CreateAsteriskSettingsDto = {
+          host: formData.host,
+          port: Number(formData.port),
+          username: formData.username,
+          password: formData.password,
+          context: formData.context,
+        };
+        
         await asteriskService.createSettings(body);
         toast.success("Configuración creada exitosamente");
       }
