@@ -90,17 +90,17 @@ export const useMetricsManager = () => {
   const getFilterDisplayValue = (field: string, value: number | string): string => {
     if (field === "statusId" && filterOptions.statuses) {
       const status = filterOptions.statuses.find(s => s.id === Number(value));
-      return status?.name || value;
+      return status?.name || String(value);
     }
     if (field === "lastManagementId" && filterOptions.managements) {
       const management = filterOptions.managements.find(m => m.id === Number(value));
-      return management?.name || value;
+      return management?.name || String(value);
     }
     if (field === "groupId" && filterOptions.groups) {
       const group = filterOptions.groups.find(g => g.id === Number(value));
-      return group?.name || value;
+      return group?.name || String(value);
     }
-    return value;
+    return String(value);
   };
 
   const renderFilterDisplay = (filterCriteria: Record<string, number>): string => {
