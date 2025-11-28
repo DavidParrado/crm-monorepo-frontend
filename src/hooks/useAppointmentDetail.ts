@@ -21,7 +21,6 @@ export const useAppointmentDetail = (id: string | undefined) => {
       const data = await getAppointmentById(id);
       setAppointment(data);
     } catch (error) {
-      console.error("Error loading appointment:", error);
       toast({
         title: "Error",
         description: "No se pudo cargar la cita",

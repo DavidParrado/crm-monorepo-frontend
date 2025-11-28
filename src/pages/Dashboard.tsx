@@ -7,7 +7,6 @@ import { useClients } from "@/hooks/useClients";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useClientFilters } from "@/hooks/useClientFilters";
 import * as clientService from "@/services/clientService";
-import { DashboardFilter } from "@/types/dashboard-filter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +92,7 @@ export default function Dashboard() {
 
 
   // Handle stat card click
-  const handleStatClick = (filter: DashboardFilter) => {
+  const handleStatClick = (filter: Record<string, any>) => {
     if (!filter) return;
     
     // Clear all filters first

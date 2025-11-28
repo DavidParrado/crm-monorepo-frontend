@@ -1,7 +1,7 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useNotificationStore } from "@/store/notificationStore";
 import { Button } from "@/components/ui/button";
-import { CheckCheck, Clock, ArrowRight, CheckCircle, AlertCircle, Info } from "lucide-react";
+import { CheckCheck, Clock, ArrowRight, Bell as BellIcon, CheckCircle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

@@ -46,8 +46,10 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
+  const { state } = useSidebar();
   const { logout } = useAuthStore();
   const { user, role } = useAuthRoles();
+  const isCollapsed = state === "collapsed";
 
   const canAccessRoute = (routeRoles: string[]) => {
     if (!role) return false;

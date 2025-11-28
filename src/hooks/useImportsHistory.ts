@@ -13,7 +13,6 @@ export const useImportsHistory = () => {
       const data = await getHistory();
       setImports(data);
     } catch (error) {
-      console.error("Error fetching imports history:", error);
       toast.error("No se pudo cargar el historial de importaciones");
     } finally {
       setIsLoading(false);
@@ -30,7 +29,6 @@ export const useImportsHistory = () => {
       toast.success("Importación eliminada exitosamente");
       await fetchImports();
     } catch (error) {
-      console.error("Error deleting import:", error);
       toast.error("No se pudo eliminar la importación");
       throw error;
     }

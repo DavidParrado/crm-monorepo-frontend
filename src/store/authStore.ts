@@ -64,7 +64,6 @@ export const useAuthStore = create<AuthState>()(
           const user = await authService.getProfile();
           set({ user, isAuthenticated: true });
         } catch (error) {
-          console.error("Auth check failed:", error);
           set({ user: null, token: null, isAuthenticated: false });
         }
       },

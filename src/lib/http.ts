@@ -25,12 +25,9 @@ const handleResponse = async (response: Response) => {
     try {
       const error = await response.json();
       throw new Error(error.message || "Ocurrió un error en la solicitud");
-    } catch (error) {
-      // If JSON parsing fails, throw generic error  
-      if (error instanceof Error && error.message !== "Ocurrió un error en la solicitud") {
-        throw new Error("Ocurrió un error en la solicitud");
-      }
-      throw error;
+    } catch (parseError) {
+      // If JSON parsing fails, throw generic error
+      throw new Error("Ocurrió un error en la solicitud");
     }
   }
 

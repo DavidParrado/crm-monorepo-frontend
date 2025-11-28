@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import * as asteriskService from "@/services/asteriskService";
-import { AsteriskSettings, AsteriskStatus, UpdateAsteriskSettingsDto, CreateAsteriskSettingsDto } from "@/types/asterisk";
+import { AsteriskSettings, AsteriskStatus, UpdateAsteriskSettingsDto } from "@/types/asterisk";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/types/api-error";
 
 export const useVoIPManager = () => {
   const [settings, setSettings] = useState<AsteriskSettings | null>(null);
@@ -70,18 +69,18 @@ export const useVoIPManager = () => {
     setIsSaving(true);
 
     try {
-      if (settings) {
-        const body: UpdateAsteriskSettingsDto = {
-          host: formData.host,
-          port: Number(formData.port),
-          username: formData.username,
-          context: formData.context,
-        };
-        
-        if (formData.password) {
-          body.password = formData.password;
-        }
+      const body: UpdateAsteriskSettingsDto = {
+        host: formData.host,
+        port: Number(formData.port),
+        username: formData.username,
+        context: formData.context,
+      };
+      
+      if (formData.password) {
+        body.password = formData.password;
+      }
 
+      if (settings) {
         await asteriskService.updateSettings(body);
         toast.success("Configuración actualizada exitosamente");
       } else {
@@ -90,25 +89,15 @@ export const useVoIPManager = () => {
           setIsSaving(false);
           return;
         }
-        
-        const body: CreateAsteriskSettingsDto = {
-          host: formData.host,
-          port: Number(formData.port),
-          username: formData.username,
-          password: formData.password,
-          context: formData.context,
-        };
-        
-        await asteriskService.createSettings(body);
+        await asteriskService.createSettings(body as any);
         toast.success("Configuración creada exitosamente");
       }
 
       await fetchSettings();
       await fetchStatus();
       setFormData(prev => ({ ...prev, password: "" }));
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al guardar la configuración");
     } finally {
       setIsSaving(false);
     }

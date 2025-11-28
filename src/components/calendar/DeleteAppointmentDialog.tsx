@@ -40,7 +40,6 @@ export default function DeleteAppointmentDialog({
 
       onSuccess();
     } catch (error) {
-      console.error("Error deleting appointment:", error);
       toast({
         title: "Error",
         description: "No se pudo eliminar la cita",

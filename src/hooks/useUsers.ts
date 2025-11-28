@@ -21,7 +21,6 @@ export function useUsers(shouldFetch: boolean = true) {
       const data = await getUsers(params);
       setUsers(data.data);
     } catch (error) {
-      console.error("Error fetching users:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar los usuarios",

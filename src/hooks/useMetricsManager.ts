@@ -3,7 +3,6 @@ import { DashboardMetric } from "@/types/metric";
 import { FilterOptions } from "@/types/filters";
 import * as clientService from "@/services/clientService";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/types/api-error";
 
 export const useMetricsManager = () => {
   const [metrics, setMetrics] = useState<DashboardMetric[]>([]);
@@ -33,9 +32,8 @@ export const useMetricsManager = () => {
     try {
       const data = await clientService.getMetrics();
       setMetrics(data);
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al cargar las métricas");
     } finally {
       setIsLoading(false);
     }
@@ -45,9 +43,8 @@ export const useMetricsManager = () => {
     try {
       const data = await clientService.getFilterOptions();
       setFilterOptions(data);
-    } catch (error) {
-      console.error("Error fetching filter options:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al cargar las opciones de filtro");
     }
   };
 
@@ -87,20 +84,20 @@ export const useMetricsManager = () => {
     setFilterValue(String(value));
   };
 
-  const getFilterDisplayValue = (field: string, value: number | string): string => {
+  const getFilterDisplayValue = (field: string, value: any): string => {
     if (field === "statusId" && filterOptions.statuses) {
       const status = filterOptions.statuses.find(s => s.id === Number(value));
-      return status?.name || String(value);
+      return status?.name || value;
     }
     if (field === "lastManagementId" && filterOptions.managements) {
       const management = filterOptions.managements.find(m => m.id === Number(value));
-      return management?.name || String(value);
+      return management?.name || value;
     }
     if (field === "groupId" && filterOptions.groups) {
       const group = filterOptions.groups.find(g => g.id === Number(value));
-      return group?.name || String(value);
+      return group?.name || value;
     }
-    return String(value);
+    return value;
   };
 
   const renderFilterDisplay = (filterCriteria: Record<string, number>): string => {
@@ -139,9 +136,8 @@ export const useMetricsManager = () => {
       setShowCreateDialog(false);
       resetForm();
       fetchMetrics();
-    } catch (error) {
-      console.error("Error creating metric:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al crear la métrica");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,9 +170,8 @@ export const useMetricsManager = () => {
       resetForm();
       setSelectedMetric(null);
       fetchMetrics();
-    } catch (error) {
-      console.error("Error updating metric:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al actualizar la métrica");
     } finally {
       setIsSubmitting(false);
     }
@@ -192,9 +187,8 @@ export const useMetricsManager = () => {
       setShowDeleteDialog(false);
       setSelectedMetric(null);
       fetchMetrics();
-    } catch (error) {
-      console.error("Error deleting metric:", error);
-      toast.error(getErrorMessage(error));
+    } catch (error: any) {
+      toast.error(error.message || "Error al eliminar la métrica");
     } finally {
       setIsSubmitting(false);
     }

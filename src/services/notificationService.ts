@@ -1,7 +1,6 @@
 import { http } from "@/lib/http";
 import { AppNotification } from "@/types/notification";
 import { PaginatedResponse } from "@/types/api";
-import { EmptyRequestBody } from "@/types/empty-request";
 
 /**
  * Gets a paginated list of all notifications.
@@ -25,14 +24,14 @@ export const getRecentNotifications = (): Promise<{ data: AppNotification[] }> =
  * Marks a single notification as read.
  */
 export const markAsRead = (id: number): Promise<AppNotification> => {
-  return http.patch<AppNotification, EmptyRequestBody>(`notifications/${id}/read`, {});
+  return http.patch<AppNotification, {}>(`notifications/${id}/read`, {});
 };
 
 /**
  * Marks all notifications as read.
  */
 export const markAllAsRead = (): Promise<{ message: string }> => {
-  return http.post<{ message: string }, EmptyRequestBody>(`notifications/mark-all-as-read`, {});
+  return http.post<{ message: string }, {}>(`notifications/mark-all-as-read`, {});
 };
 
 /**

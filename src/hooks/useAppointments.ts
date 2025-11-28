@@ -27,7 +27,6 @@ export function useAppointments() {
       setTotal(data?.total || 0);
       setTotalPages(Math.ceil((data?.total || 0) / limit));
     } catch (error) {
-      console.error("Error fetching appointments:", error);
       toast({
         title: "Error",
         description: "No se pudieron cargar las citas",
