@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MainLayout } from "./components/layout/MainLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
@@ -17,6 +18,8 @@ import Imports from "./pages/Imports";
 import VoIP from "./pages/VoIP";
 import Kanban from "./pages/Kanban";
 import NotFound from "./pages/NotFound";
+import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
+import Tenants from "./pages/admin/Tenants";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +30,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Regular CRM Routes */}
           <Route path="/login" element={<Login />} />
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
@@ -41,6 +45,14 @@ const App = () => (
             <Route path="/voip" element={<VoIP />} />
             <Route path="/kanban" element={<Kanban />} />
           </Route>
+
+          {/* Super Admin Control Plane Routes */}
+          <Route path="/admin/login" element={<SuperAdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/tenants" replace />} />
+            <Route path="tenants" element={<Tenants />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
