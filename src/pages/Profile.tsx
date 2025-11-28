@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
 import { Mail, User, Briefcase, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export default function Profile() {
-  const { user } = useAuthStore();
+  const { user } = useAuthRoles();
 
   if (!user) {
     return null;

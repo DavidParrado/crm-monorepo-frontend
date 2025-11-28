@@ -3,8 +3,7 @@ import { format } from "date-fns";
 import { Appointment, CreateAppointmentData, UpdateAppointmentData } from "@/types/appointment";
 import { createAppointment, updateAppointment } from "@/services/appointmentService";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/store/authStore";
-import { RoleEnum } from "@/types/role";
+import { useAuthRoles } from "@/hooks/useAuthRoles";
 
 interface UseAppointmentFormProps {
   appointment?: Appointment;
@@ -13,7 +12,7 @@ interface UseAppointmentFormProps {
 }
 
 export function useAppointmentForm({ appointment, onSuccess, open }: UseAppointmentFormProps) {
-  const { user } = useAuthStore();
+  const { isAdmin } = useAuthRoles();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,8 +22,6 @@ export function useAppointmentForm({ appointment, onSuccess, open }: UseAppointm
     date: "",
     time: ""
   });
-
-  const isAdmin = user?.role?.name === RoleEnum.Admin;
 
   useEffect(() => {
     if (open) {
