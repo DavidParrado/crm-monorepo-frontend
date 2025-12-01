@@ -60,12 +60,12 @@ export const TenantModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 border-slate-800 text-slate-100 sm:max-w-md">
+      <DialogContent className="bg-slate-50 border-slate-100 text-slate-900 sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {isCreateMode ? "Crear Tenant" : "Editar Tenant"}
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-700">
             {isCreateMode
               ? "Registra un nuevo cliente en la plataforma"
               : "Modifica los datos del tenant"}
@@ -80,11 +80,11 @@ export const TenantModal = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-200">Nombre</FormLabel>
+                    <FormLabel className="text-slate-700">Nombre</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Mi Empresa S.A."
-                        className="bg-slate-800 border-slate-700 text-slate-100"
+                        className="bg-slate-50 border-slate-300 text-slate-900"
                         {...field}
                       />
                     </FormControl>
@@ -98,20 +98,20 @@ export const TenantModal = ({
                 name="subdomain"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-200">Subdominio</FormLabel>
+                    <FormLabel className="text-slate-700">Subdominio</FormLabel>
                     <FormControl>
                       <div className="flex items-center">
                         <Input
                           placeholder="mi-empresa"
-                          className="bg-slate-800 border-slate-700 text-slate-100 rounded-r-none"
+                          className="bg-slate-50 border-slate-300 text-slate-900 rounded-r-none"
                           {...field}
                         />
-                        <span className="px-3 py-2 bg-slate-700 border border-l-0 border-slate-700 rounded-r-md text-slate-400 text-sm">
+                        <span className="px-3 py-2 bg-slate-200 border border-l-0 border-slate-300 rounded-r-md text-slate-400 text-sm">
                           .app.com
                         </span>
                       </div>
                     </FormControl>
-                    <FormDescription className="text-slate-500">
+                    <FormDescription className="text-slate-600">
                       Solo letras minúsculas, números y guiones
                     </FormDescription>
                     <FormMessage />
@@ -119,8 +119,8 @@ export const TenantModal = ({
                 )}
               />
 
-              <div className="pt-4 border-t border-slate-800">
-                <p className="text-sm font-medium text-slate-300 mb-3">
+              <div className="pt-4 border-t border-slate-300">
+                <p className="text-sm font-medium text-slate-700 mb-3">
                   Administrador inicial
                 </p>
                 
@@ -130,11 +130,11 @@ export const TenantModal = ({
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200">Usuario</FormLabel>
+                        <FormLabel className="text-slate-700">Usuario</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="admin"
-                            className="bg-slate-800 border-slate-700 text-slate-100"
+                            className="bg-slate-50 border-slate-300 text-slate-900"
                             {...field}
                           />
                         </FormControl>
@@ -148,12 +148,12 @@ export const TenantModal = ({
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-slate-200">Contraseña</FormLabel>
+                        <FormLabel className="text-slate-700">Contraseña</FormLabel>
                         <FormControl>
                           <Input
                             type="password"
                             placeholder="••••••••"
-                            className="bg-slate-800 border-slate-700 text-slate-100"
+                            className="bg-slate-50 border-slate-300 text-slate-900"
                             {...field}
                           />
                         </FormControl>
@@ -169,14 +169,14 @@ export const TenantModal = ({
                   type="button"
                   variant="ghost"
                   onClick={onClose}
-                  className="text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                  className="text-slate-500 hover:text-slate-900 hover:bg-slate-200"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-900"
+                  className="bg-purple-800 hover:bg-purple-900 text-white"
                 >
                   {isSubmitting ? (
                     <>
@@ -198,11 +198,11 @@ export const TenantModal = ({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-200">Nombre</FormLabel>
+                    <FormLabel className="text-slate-700">Nombre</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Mi Empresa S.A."
-                        className="bg-slate-800 border-slate-700 text-slate-100"
+                        className="bg-slate-50 border-slate-300 text-slate-900"
                         {...field}
                       />
                     </FormControl>
@@ -213,11 +213,11 @@ export const TenantModal = ({
 
               {initialData && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-slate-200">Subdominio</p>
-                  <p className="text-sm text-slate-400 bg-slate-800 px-3 py-2 rounded-md font-mono">
+                  <p className="text-sm font-medium text-slate-700">Subdominio</p>
+                  <p className="text-sm text-slate-700 bg-slate-100 px-3 py-2 rounded-md font-mono">
                     {initialData.subdomain}.app.com
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-600">
                     El subdominio no puede ser modificado
                   </p>
                 </div>
@@ -228,23 +228,23 @@ export const TenantModal = ({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-slate-200">Estado</FormLabel>
+                    <FormLabel className="text-slate-700">Estado</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                        <SelectTrigger className="bg-slate-50 border-slate-300 text-slate-900">
                           <SelectValue placeholder="Selecciona un estado" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-slate-900 border-slate-800">
+                      <SelectContent className="bg-slate-50 border-slate-300">
                         <SelectItem 
                           value="ACTIVE"
-                          className="text-slate-300 focus:text-slate-100 focus:bg-slate-800"
+                          className="text-slate-900 focus:text-slate-100 focus:bg-slate-800"
                         >
                           Activo
                         </SelectItem>
                         <SelectItem 
                           value="SUSPENDED"
-                          className="text-slate-300 focus:text-slate-100 focus:bg-slate-800"
+                          className="text-slate-900 focus:text-slate-100 focus:bg-slate-800"
                         >
                           Suspendido
                         </SelectItem>
@@ -260,14 +260,14 @@ export const TenantModal = ({
                   type="button"
                   variant="ghost"
                   onClick={onClose}
-                  className="text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                  className="text-slate-500 hover:text-slate-100 hover:bg-slate-800"
                 >
                   Cancelar
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-900"
+                  className="bg-purple-800 hover:bg-purple-900 text-white"
                 >
                   {isSubmitting ? (
                     <>

@@ -33,14 +33,14 @@ const Tenants = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Tenants</h1>
-          <p className="text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-800">Tenants</h1>
+          <p className="text-slate-700 mt-1">
             Gestiona los clientes (tenants) de la plataforma
           </p>
         </div>
         <Button
           onClick={openCreateModal}
-          className="bg-amber-500 hover:bg-amber-600 text-slate-900"
+          className="bg-purple-800 hover:bg-purple-900 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
           Nuevo Tenant

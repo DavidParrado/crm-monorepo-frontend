@@ -36,10 +36,10 @@ export const TenantTable = ({
 }: TenantTableProps) => {
   if (isLoading) {
     return (
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-white border-slate-200">
         <div className="p-4 space-y-3">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-12 bg-slate-800" />
+            <Skeleton key={i} className="h-12 bg-slate-100" />
           ))}
         </div>
       </Card>
@@ -48,10 +48,10 @@ export const TenantTable = ({
 
   if (tenants.length === 0) {
     return (
-      <Card className="bg-slate-900 border-slate-800">
+      <Card className="bg-white border-slate-200">
         <div className="p-12 text-center">
-          <p className="text-slate-400">No hay tenants registrados</p>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-slate-700">No hay tenants registrados</p>
+          <p className="text-sm text-slate-700 mt-1">
             Crea tu primer tenant para comenzar
           </p>
         </div>
@@ -60,30 +60,30 @@ export const TenantTable = ({
   }
 
   return (
-    <Card className="bg-slate-900 border-slate-800 overflow-hidden">
+    <Card className="bg-white border-slate-200 overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="border-slate-800 hover:bg-transparent">
-            <TableHead className="text-slate-400">Nombre</TableHead>
-            <TableHead className="text-slate-400">Subdominio</TableHead>
-            <TableHead className="text-slate-400">Estado</TableHead>
-            <TableHead className="text-slate-400">Creado</TableHead>
-            <TableHead className="text-slate-400 text-right">Acciones</TableHead>
+          <TableRow className="border-slate-200 hover:bg-transparent">
+            <TableHead className="text-slate-500">Nombre</TableHead>
+            <TableHead className="text-slate-500">Subdominio</TableHead>
+            <TableHead className="text-slate-500">Estado</TableHead>
+            <TableHead className="text-slate-500">Creado</TableHead>
+            <TableHead className="text-slate-500 text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tenants.map((tenant) => (
             <TableRow
               key={tenant.id}
-              className="border-slate-800 hover:bg-slate-800/50"
+              className="border-slate-200 hover:bg-slate-50"
             >
-              <TableCell className="font-medium text-slate-100">
+              <TableCell className="font-medium text-slate-700">
                 {tenant.name}
               </TableCell>
               <TableCell>
                 <Badge
                   variant="secondary"
-                  className="bg-slate-800 text-slate-300 font-mono text-xs"
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-600 font-mono text-xs"
                 >
                   {tenant.subdomain}
                 </Badge>
@@ -100,7 +100,7 @@ export const TenantTable = ({
                   {tenant.status === 'ACTIVE' ? 'Activo' : 'Suspendido'}
                 </Badge>
               </TableCell>
-              <TableCell className="text-slate-400 text-sm">
+              <TableCell className="text-slate-600 text-sm">
                 {format(new Date(tenant.createdAt), "dd MMM yyyy", { locale: es })}
               </TableCell>
               <TableCell className="text-right">
@@ -109,18 +109,18 @@ export const TenantTable = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                      className="text-slate-600 hover:text-slate-100 hover:bg-slate-800"
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="bg-slate-900 border-slate-800"
+                    className="bg-white border-slate-200"
                   >
                     <DropdownMenuItem
                       onClick={() => onEdit(tenant)}
-                      className="text-slate-300 focus:text-slate-100 focus:bg-slate-800"
+                      className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
                     >
                       <Pencil className="h-4 w-4 mr-2" />
                       Editar

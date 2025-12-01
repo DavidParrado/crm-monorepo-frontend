@@ -48,20 +48,20 @@ const SuperAdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg--950 p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950" />
       
-      <Card className="w-full max-w-md relative z-10 bg-slate-900 border-slate-800">
+      <Card className="w-full max-w-md relative z-10 bg-white border-slate-800">
         <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-            <Shield className="h-8 w-8 text-amber-500" />
+          <div className="mx-auto w-16 h-16 rounded-2xl bg-purple-800/10 flex items-center justify-center">
+            <Shield className="h-8 w-8 text-purple-800" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold text-slate-100">
-              Control Plane
+            <CardTitle className="text-2xl font-bold text-slate-900">
+              SuperAdmin CRM
             </CardTitle>
-            <CardDescription className="text-slate-400 mt-1">
+            <CardDescription className="text-slate-700 mt-1">
               Acceso exclusivo para Super Administradores
             </CardDescription>
           </div>
@@ -76,14 +76,14 @@ const SuperAdminLogin = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-slate-200">
-                Usuario
+              <Label htmlFor="username" className="text-slate-700">
+                Email
               </Label>
               <Input
                 id="username"
                 type="text"
                 placeholder="admin"
-                className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500/20"
+                className="bg-slate-50 border-slate-700 text-slate-900 placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20"
                 {...form.register("username")}
               />
               {form.formState.errors.username && (
@@ -94,7 +94,7 @@ const SuperAdminLogin = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-200">
+              <Label htmlFor="password" className="text-slate-700">
                 Contraseña
               </Label>
               <div className="relative">
@@ -102,14 +102,14 @@ const SuperAdminLogin = () => {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="bg-slate-800 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:border-amber-500 focus:ring-amber-500/20 pr-10"
+                  className="bg-slate-50 border-slate-700 text-slate-900 placeholder:text-slate-500 focus:border-purple-500 focus:ring-purple-500/20 pr-10"
                   {...form.register("password")}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 text-slate-400 hover:text-slate-100 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-full px-3 text-slate-700 hover:text-slate-900 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
@@ -128,7 +128,7 @@ const SuperAdminLogin = () => {
 
             <Button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-medium"
+              className="w-full bg-purple-800 hover:bg-purple-900 text-white font-medium"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -147,7 +147,7 @@ const SuperAdminLogin = () => {
               Este acceso está reservado únicamente para administradores del sistema.
               <br />
               Si necesitas acceder al CRM, usa el{" "}
-              <a href="/login" className="text-amber-500 hover:underline">
+              <a href="/login" className="text-purple-500 hover:underline">
                 inicio de sesión regular
               </a>
               .

@@ -28,19 +28,19 @@ export const DeleteTenantDialog = ({
 }: DeleteTenantDialogProps) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
-      <AlertDialogContent className="bg-slate-900 border-slate-800">
+      <AlertDialogContent className="bg-white border-slate-200">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-destructive/10">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
-            <AlertDialogTitle className="text-slate-100">
+            <AlertDialogTitle className="text-slate-900">
               Eliminar Tenant
             </AlertDialogTitle>
           </div>
-          <AlertDialogDescription className="text-slate-400 pt-2">
+          <AlertDialogDescription className="text-slate-700 pt-2">
             ¿Estás seguro de que deseas eliminar el tenant{" "}
-            <span className="font-medium text-slate-200">{tenant?.name}</span>?
+            <span className="font-medium text-slate-900">{tenant?.name}</span>?
             <br />
             <span className="text-destructive">
               Esta acción no se puede deshacer y eliminará todos los datos asociados.
@@ -48,8 +48,8 @@ export const DeleteTenantDialog = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel 
-            className="bg-transparent border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+          <AlertDialogCancel
+            className="bg-transparent border-slate-300 text-slate-500 hover:bg-slate-50 hover:text-slate-600"
             disabled={isDeleting}
           >
             Cancelar

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Building2, Shield, LogOut, LayoutDashboard } from "lucide-react";
+import { Building2, Shield, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -39,12 +39,12 @@ export const AdminLayout = () => {
       <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col">
         {/* Header */}
         <div className="h-16 flex items-center gap-3 px-4 border-b border-slate-800">
-          <div className="p-2 rounded-lg bg-amber-500/10">
-            <Shield className="h-5 w-5 text-amber-500" />
+          <div className="p-2 rounded-lg bg-purple-500/10">
+            <Shield className="h-5 w-5 text-purple-500" />
           </div>
           <div>
-            <h1 className="font-semibold text-slate-100 text-sm">Control Plane</h1>
-            <p className="text-xs text-slate-500">Super Admin</p>
+            <h1 className="font-semibold text-slate-100 text-sm">SuperAdmin CRM</h1>
+            <p className="text-xs text-slate-500">Vista Administrativa</p>
           </div>
         </div>
 
@@ -59,11 +59,11 @@ export const AdminLayout = () => {
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-amber-500/10 text-amber-500"
-                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+                    ? "bg-purple-500/10 text-purple-400"
+                    : "text-white hover:text-slate-100 hover:bg-slate-800"
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4 text-purple-500" />
                 {item.title}
               </Link>
             );
@@ -73,8 +73,8 @@ export const AdminLayout = () => {
         {/* User section */}
         <div className="p-4 border-t border-slate-800">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <span className="text-xs font-medium text-amber-500">
+            <div className="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center">
+              <span className="text-xs font-medium text-purple-500">
                 {user?.firstName?.[0] || 'A'}
               </span>
             </div>
@@ -90,7 +90,7 @@ export const AdminLayout = () => {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-slate-400 hover:text-slate-100 hover:bg-slate-800"
+            className="w-full justify-start bg-slate-50 text-slate-900 hover:text-slate-800 hover:bg-slate-100"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -100,7 +100,7 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-slate-950">
+      <main className="flex-1 bg-white">
         <Outlet />
       </main>
     </div>
