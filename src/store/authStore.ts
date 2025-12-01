@@ -85,16 +85,18 @@ export const useAuthStore = create<AuthState>()(
           return;
         }
 
-        // Super admin doesn't need profile check from regular auth
-        if (isSuperAdmin) {
-          set({ isAuthenticated: true });
-          return;
-        }
-
         try {
-          const user = await authService.getProfile();
-          set({ user, isAuthenticated: true });
+          if (isSuperAdmin) {
+            // Validate super admin token
+            const user = await iamService.getProfile(token);
+            set({ user, isAuthenticated: true, isSuperAdmin: true });
+          } else {
+            // Validate regular user token
+            const user = await authService.getProfile();
+            set({ user, isAuthenticated: true });
+          }
         } catch (error) {
+          // Token expired or invalid - clear auth state
           set({ user: null, token: null, isAuthenticated: false, isSuperAdmin: false });
         }
       },
