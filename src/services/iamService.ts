@@ -25,3 +25,23 @@ export const login = async (credentials: SuperAdminCredentials): Promise<SuperAd
 
   return response.json();
 };
+
+/**
+ * Get the Super Admin profile (validates token).
+ */
+export const getProfile = async (token: string): Promise<SuperAdminLoginResponse['user']> => {
+  const response = await fetch(`${API_URL}/iam/profile`, {
+    method: 'GET',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al validar la sesión de Super Admin');
+  }
+
+  return response.json();
+};
