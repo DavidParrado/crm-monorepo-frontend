@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import * as tenancyService from "@/services/tenancyService";
 import { Tenant, CreateTenantData, UpdateTenantData } from "@/types/tenant";
 
-// Form data types (exported for use in components)
+// Form data types
 export interface CreateTenantFormData {
   name: string;
   subdomain: string;
@@ -20,7 +20,12 @@ export interface UpdateTenantFormData {
   status: 'ACTIVE' | 'SUSPENDED';
 }
 
-// Schema for creating a tenant (includes admin credentials)
+export interface ResetPasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+// Schemas
 const createTenantSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   subdomain: z.string()
@@ -30,24 +35,38 @@ const createTenantSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
 });
 
-// Schema for updating a tenant (no subdomain, username, or password)
 const updateTenantSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   status: z.enum(["ACTIVE", "SUSPENDED"]),
 });
 
+const resetPasswordSchema = z.object({
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
+});
+
+export type TenantTab = 'active' | 'trash';
+
 export const useTenants = () => {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<TenantTab>('active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'CREATE' | 'EDIT'>('CREATE');
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
+  const [isHardDeleteDialogOpen, setIsHardDeleteDialogOpen] = useState(false);
+  const [tenantToHardDelete, setTenantToHardDelete] = useState<Tenant | null>(null);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [tenantToResetPassword, setTenantToResetPassword] = useState<Tenant | null>(null);
 
-  // Fetch all tenants
+  // Fetch tenants based on active tab
   const { data: tenants = [], isLoading, error } = useQuery({
-    queryKey: ['tenants'],
-    queryFn: tenancyService.getAll,
+    queryKey: ['tenants', activeTab],
+    queryFn: () => tenancyService.getAll({ trashed: activeTab === 'trash' }),
   });
 
   // Create form
@@ -67,6 +86,15 @@ export const useTenants = () => {
     defaultValues: {
       name: '',
       status: 'ACTIVE',
+    },
+  });
+
+  // Reset password form
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
     },
   });
 
@@ -97,17 +125,56 @@ export const useTenants = () => {
     },
   });
 
-  // Delete mutation
+  // Soft delete mutation
   const deleteMutation = useMutation({
     mutationFn: (id: string) => tenancyService.remove(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
-      toast.success("Tenant eliminado exitosamente");
+      toast.success("Tenant movido a la papelera");
       setIsDeleteDialogOpen(false);
       setTenantToDelete(null);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Error al eliminar el tenant");
+    },
+  });
+
+  // Restore mutation
+  const restoreMutation = useMutation({
+    mutationFn: (id: string) => tenancyService.restore(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      toast.success("Tenant restaurado exitosamente");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al restaurar el tenant");
+    },
+  });
+
+  // Hard delete mutation
+  const hardDeleteMutation = useMutation({
+    mutationFn: (id: string) => tenancyService.hardDelete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      toast.success("Tenant eliminado permanentemente");
+      setIsHardDeleteDialogOpen(false);
+      setTenantToHardDelete(null);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al eliminar el tenant");
+    },
+  });
+
+  // Reset password mutation
+  const resetPasswordMutation = useMutation({
+    mutationFn: ({ id, password }: { id: string; password: string }) => 
+      tenancyService.resetTenantPassword(id, password),
+    onSuccess: () => {
+      toast.success("Contraseña restablecida exitosamente");
+      closeResetPasswordModal();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Error al restablecer la contraseña");
     },
   });
 
@@ -158,6 +225,44 @@ export const useTenants = () => {
     }
   };
 
+  // Hard delete handlers
+  const openHardDeleteDialog = (tenant: Tenant) => {
+    setTenantToHardDelete(tenant);
+    setIsHardDeleteDialogOpen(true);
+  };
+
+  const closeHardDeleteDialog = () => {
+    setIsHardDeleteDialogOpen(false);
+    setTenantToHardDelete(null);
+  };
+
+  const confirmHardDelete = () => {
+    if (tenantToHardDelete) {
+      hardDeleteMutation.mutate(tenantToHardDelete.id);
+    }
+  };
+
+  // Reset password handlers
+  const openResetPasswordModal = (tenant: Tenant) => {
+    setTenantToResetPassword(tenant);
+    resetPasswordForm.reset({
+      password: '',
+      confirmPassword: '',
+    });
+    setIsResetPasswordModalOpen(true);
+  };
+
+  const closeResetPasswordModal = () => {
+    setIsResetPasswordModalOpen(false);
+    setTenantToResetPassword(null);
+    resetPasswordForm.reset();
+  };
+
+  // Restore handler
+  const handleRestore = (tenant: Tenant) => {
+    restoreMutation.mutate(tenant.id);
+  };
+
   // Submit handlers
   const handleCreateSubmit = (data: CreateTenantFormData) => {
     createMutation.mutate(data);
@@ -169,7 +274,17 @@ export const useTenants = () => {
     }
   };
 
+  const handleResetPasswordSubmit = (data: ResetPasswordFormData) => {
+    if (tenantToResetPassword) {
+      resetPasswordMutation.mutate({ id: tenantToResetPassword.id, password: data.password });
+    }
+  };
+
   return {
+    // Tab state
+    activeTab,
+    setActiveTab,
+    
     // Data
     tenants,
     isLoading,
@@ -183,19 +298,40 @@ export const useTenants = () => {
     // Forms
     createForm,
     updateForm,
+    resetPasswordForm,
     
     // Modal actions
     openCreateModal,
     openEditModal,
     closeModal,
     
-    // Delete dialog
+    // Soft delete dialog
     isDeleteDialogOpen,
     tenantToDelete,
     openDeleteDialog,
     closeDeleteDialog,
     confirmDelete,
     isDeleting: deleteMutation.isPending,
+    
+    // Hard delete dialog
+    isHardDeleteDialogOpen,
+    tenantToHardDelete,
+    openHardDeleteDialog,
+    closeHardDeleteDialog,
+    confirmHardDelete,
+    isHardDeleting: hardDeleteMutation.isPending,
+    
+    // Reset password modal
+    isResetPasswordModalOpen,
+    tenantToResetPassword,
+    openResetPasswordModal,
+    closeResetPasswordModal,
+    handleResetPasswordSubmit,
+    isResettingPassword: resetPasswordMutation.isPending,
+    
+    // Restore
+    handleRestore,
+    isRestoring: restoreMutation.isPending,
     
     // Submit actions
     handleCreateSubmit,

@@ -22,6 +22,7 @@ import Kanban from "./pages/Kanban";
 import NotFound from "./pages/NotFound";
 import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import Tenants from "./pages/admin/Tenants";
+import Team from "./pages/admin/Team";
 
 const queryClient = new QueryClient();
 
@@ -61,6 +62,7 @@ const App = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/tenants" replace />} />
             <Route path="tenants" element={<Tenants />} />
+            <Route path="team" element={<Team />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

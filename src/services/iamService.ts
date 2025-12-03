@@ -1,4 +1,5 @@
-import { SuperAdminLoginResponse } from "@/types/tenant";
+import { SuperAdminLoginResponse, SuperAdminUser, CreateTeamMemberData, UpdateTeamMemberData } from "@/types/tenant";
+import { useAuthStore } from "@/store/authStore";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
 
@@ -8,8 +9,34 @@ export interface SuperAdminCredentials {
 }
 
 /**
+ * Gets the Super Admin auth header.
+ */
+const getSuperAdminHeaders = () => {
+  const token = useAuthStore.getState().token;
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+};
+
+/**
+ * Handles API response.
+ */
+const handleResponse = async <T>(response: Response): Promise<T> => {
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Error en la solicitud' }));
+    throw new Error(error.message || 'Error en la solicitud');
+  }
+  
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  
+  return response.json();
+};
+
+/**
  * Super Admin login via IAM endpoint.
- * This is separate from the regular auth flow.
  */
 export const login = async (credentials: SuperAdminCredentials): Promise<SuperAdminLoginResponse> => {
   const response = await fetch(`${API_URL}/iam/login`, {
@@ -29,7 +56,7 @@ export const login = async (credentials: SuperAdminCredentials): Promise<SuperAd
 /**
  * Get the Super Admin profile (validates token).
  */
-export const getProfile = async (token: string): Promise<SuperAdminLoginResponse['user']> => {
+export const getProfile = async (token: string): Promise<SuperAdminUser> => {
   const response = await fetch(`${API_URL}/iam/profile`, {
     method: 'GET',
     headers: { 
@@ -44,4 +71,50 @@ export const getProfile = async (token: string): Promise<SuperAdminLoginResponse
   }
 
   return response.json();
+};
+
+/**
+ * Get all team members (IAM users).
+ */
+export const getTeam = async (): Promise<SuperAdminUser[]> => {
+  const response = await fetch(`${API_URL}/iam/users`, {
+    method: 'GET',
+    headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<SuperAdminUser[]>(response);
+};
+
+/**
+ * Invite a new team member.
+ */
+export const inviteMember = async (data: CreateTeamMemberData): Promise<SuperAdminUser> => {
+  const response = await fetch(`${API_URL}/iam/users`, {
+    method: 'POST',
+    headers: getSuperAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<SuperAdminUser>(response);
+};
+
+/**
+ * Update a team member.
+ */
+export const updateMember = async (id: string, data: UpdateTeamMemberData): Promise<SuperAdminUser> => {
+  const response = await fetch(`${API_URL}/iam/users/${id}`, {
+    method: 'PATCH',
+    headers: getSuperAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<SuperAdminUser>(response);
+};
+
+/**
+ * Remove a team member.
+ */
+export const removeMember = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/iam/users/${id}`, {
+    method: 'DELETE',
+    headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<void>(response);
 };

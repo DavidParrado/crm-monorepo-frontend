@@ -1,13 +1,16 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Key, RotateCcw, Flame } from "lucide-react";
 import { Tenant } from "@/types/tenant";
+import { TenantTab } from "@/hooks/useTenants";
+import { useSuperAdminPermissions } from "@/hooks/useSuperAdminPermissions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -24,16 +27,27 @@ import { Card } from "@/components/ui/card";
 interface TenantTableProps {
   tenants: Tenant[];
   isLoading: boolean;
+  activeTab: TenantTab;
   onEdit: (tenant: Tenant) => void;
   onDelete: (tenant: Tenant) => void;
+  onResetPassword: (tenant: Tenant) => void;
+  onRestore: (tenant: Tenant) => void;
+  onHardDelete: (tenant: Tenant) => void;
 }
 
 export const TenantTable = ({
   tenants,
   isLoading,
+  activeTab,
   onEdit,
   onDelete,
+  onResetPassword,
+  onRestore,
+  onHardDelete,
 }: TenantTableProps) => {
+  const { canEditTenants, canSoftDelete, canResetPassword, canRestore, canHardDelete } = useSuperAdminPermissions();
+  const isTrashView = activeTab === 'trash';
+
   if (isLoading) {
     return (
       <Card className="bg-white border-slate-200">
@@ -50,9 +64,13 @@ export const TenantTable = ({
     return (
       <Card className="bg-white border-slate-200">
         <div className="p-12 text-center">
-          <p className="text-slate-700">No hay tenants registrados</p>
+          <p className="text-slate-700">
+            {isTrashView ? 'La papelera está vacía' : 'No hay tenants registrados'}
+          </p>
           <p className="text-sm text-slate-700 mt-1">
-            Crea tu primer tenant para comenzar
+            {isTrashView
+              ? 'Los tenants eliminados aparecerán aquí'
+              : 'Crea tu primer tenant para comenzar'}
           </p>
         </div>
       </Card>
@@ -67,7 +85,9 @@ export const TenantTable = ({
             <TableHead className="text-slate-500">Nombre</TableHead>
             <TableHead className="text-slate-500">Subdominio</TableHead>
             <TableHead className="text-slate-500">Estado</TableHead>
-            <TableHead className="text-slate-500">Creado</TableHead>
+            <TableHead className="text-slate-500">
+              {isTrashView ? 'Eliminado' : 'Creado'}
+            </TableHead>
             <TableHead className="text-slate-500 text-right">Acciones</TableHead>
           </TableRow>
         </TableHeader>
@@ -101,7 +121,11 @@ export const TenantTable = ({
                 </Badge>
               </TableCell>
               <TableCell className="text-slate-600 text-sm">
-                {format(new Date(tenant.createdAt), "dd MMM yyyy", { locale: es })}
+                {format(
+                  new Date(isTrashView && tenant.deletedAt ? tenant.deletedAt : tenant.createdAt),
+                  "dd MMM yyyy",
+                  { locale: es }
+                )}
               </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
@@ -118,20 +142,66 @@ export const TenantTable = ({
                     align="end"
                     className="bg-white border-slate-200"
                   >
-                    <DropdownMenuItem
-                      onClick={() => onEdit(tenant)}
-                      className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
-                    >
-                      <Pencil className="h-4 w-4 mr-2" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onDelete(tenant)}
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Eliminar
-                    </DropdownMenuItem>
+                    {isTrashView ? (
+                      // Trash view actions
+                      <>
+                        {canRestore && (
+                          <DropdownMenuItem
+                            onClick={() => onRestore(tenant)}
+                            className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
+                          >
+                            <RotateCcw className="h-4 w-4 mr-2" />
+                            Restaurar
+                          </DropdownMenuItem>
+                        )}
+                        {canHardDelete && (
+                          <>
+                            <DropdownMenuSeparator className="bg-slate-200" />
+                            <DropdownMenuItem
+                              onClick={() => onHardDelete(tenant)}
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Flame className="h-4 w-4 mr-2" />
+                              Eliminar Permanentemente
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      // Active view actions
+                      <>
+                        {canEditTenants && (
+                          <DropdownMenuItem
+                            onClick={() => onEdit(tenant)}
+                            className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
+                          >
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                        )}
+                        {canResetPassword && (
+                          <DropdownMenuItem
+                            onClick={() => onResetPassword(tenant)}
+                            className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
+                          >
+                            <Key className="h-4 w-4 mr-2" />
+                            Restablecer Contraseña
+                          </DropdownMenuItem>
+                        )}
+                        {canSoftDelete && (
+                          <>
+                            <DropdownMenuSeparator className="bg-slate-200" />
+                            <DropdownMenuItem
+                              onClick={() => onDelete(tenant)}
+                              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Mover a Papelera
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
