@@ -1,4 +1,4 @@
-import { Tenant, CreateTenantData, UpdateTenantData } from "@/types/tenant";
+import { Tenant, CreateTenantData, UpdateTenantData, TenantFilters } from "@/types/tenant";
 import { useAuthStore } from "@/store/authStore";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
@@ -32,10 +32,18 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
 };
 
 /**
- * Get all tenants.
+ * Get all tenants with optional filters.
  */
-export const getAll = async (): Promise<Tenant[]> => {
-  const response = await fetch(`${API_URL}/tenancy`, {
+export const getAll = async (filters?: TenantFilters): Promise<Tenant[]> => {
+  const params = new URLSearchParams();
+  if (filters?.trashed !== undefined) {
+    params.append('trashed', String(filters.trashed));
+  }
+  
+  const queryString = params.toString();
+  const url = `${API_URL}/tenancy${queryString ? `?${queryString}` : ''}`;
+  
+  const response = await fetch(url, {
     method: 'GET',
     headers: getSuperAdminHeaders(),
   });
@@ -67,12 +75,46 @@ export const update = async (id: string, data: UpdateTenantData): Promise<Tenant
 };
 
 /**
- * Delete a tenant.
+ * Soft delete a tenant (moves to trash).
  */
 export const remove = async (id: string): Promise<void> => {
   const response = await fetch(`${API_URL}/tenancy/${id}`, {
     method: 'DELETE',
     headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<void>(response);
+};
+
+/**
+ * Restore a soft-deleted tenant.
+ */
+export const restore = async (id: string): Promise<Tenant> => {
+  const response = await fetch(`${API_URL}/tenancy/${id}/restore`, {
+    method: 'PATCH',
+    headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<Tenant>(response);
+};
+
+/**
+ * Permanently delete a tenant (hard delete).
+ */
+export const hardDelete = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/tenancy/${id}?hardDelete=true`, {
+    method: 'DELETE',
+    headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<void>(response);
+};
+
+/**
+ * Reset the admin password for a tenant.
+ */
+export const resetTenantPassword = async (id: string, password: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/tenancy/${id}/reset-admin-password`, {
+    method: 'POST',
+    headers: getSuperAdminHeaders(),
+    body: JSON.stringify({ password }),
   });
   return handleResponse<void>(response);
 };
