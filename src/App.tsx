@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import Tenants from "./pages/admin/Tenants";
 import Team from "./pages/admin/Team";
+import AdminIntegrations from "./pages/admin/Integrations";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const App = () => {
             <Route index element={<Navigate to="/admin/tenants" replace />} />
             <Route path="tenants" element={<Tenants />} />
             <Route path="team" element={<Team />} />
+            <Route path="integrations" element={<AdminIntegrations />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
