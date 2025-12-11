@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Building2, Shield, LogOut } from "lucide-react";
+import { Building2, Shield, LogOut, Users, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,16 @@ const adminNavItems = [
     title: "Tenants",
     href: "/admin/tenants",
     icon: Building2,
+  },
+  {
+    title: "Equipo",
+    href: "/admin/team",
+    icon: Users,
+  },
+  {
+    title: "Integraciones",
+    href: "/admin/integrations",
+    icon: Server,
   },
 ];
 
