@@ -118,3 +118,14 @@ export const resetTenantPassword = async (id: string, password: string): Promise
   });
   return handleResponse<void>(response);
 };
+
+/**
+ * Get a single tenant by ID.
+ */
+export const getById = async (id: string): Promise<Tenant> => {
+  const response = await fetch(`${API_URL}/tenancy/${id}`, {
+    method: 'GET',
+    headers: getSuperAdminHeaders(),
+  });
+  return handleResponse<Tenant>(response);
+};

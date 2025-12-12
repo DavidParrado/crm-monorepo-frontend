@@ -11,8 +11,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   useProvisionEvolutionForm,
   useProvisionEvolution,
+  useChatwootAccounts,
   slugifyInstanceName,
 } from '@/hooks/useIntegrations';
 import { Loader2, Smartphone } from 'lucide-react';
@@ -20,7 +28,7 @@ import { Loader2, Smartphone } from 'lucide-react';
 interface ProvisionEvolutionModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  chatwootAccountId: string;
+  chatwootAccountId?: string;
   accountName?: string;
 }
 
@@ -32,16 +40,22 @@ export const ProvisionEvolutionModal = ({
 }: ProvisionEvolutionModalProps) => {
   const form = useProvisionEvolutionForm();
   const provisionMutation = useProvisionEvolution();
+  
+  // Fetch all accounts for dropdown (only when no chatwootAccountId is provided)
+  const { data: accountsData, isLoading: isLoadingAccounts } = useChatwootAccounts(1, 100);
+  const showAccountSelector = !chatwootAccountId;
 
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = form;
 
   const instanceName = watch('instanceName');
+  const selectedAccountId = watch('chatwootAccountId');
   const slugPreview = instanceName ? slugifyInstanceName(instanceName) : '';
 
   useEffect(() => {
@@ -51,13 +65,21 @@ export const ProvisionEvolutionModal = ({
   }, [open, reset]);
 
   const onSubmit = handleSubmit(async (data) => {
+    const accountIdToUse = chatwootAccountId || data.chatwootAccountId;
+    
+    if (!accountIdToUse) {
+      return;
+    }
+
     await provisionMutation.mutateAsync({
       instanceName: data.instanceName,
       organization: data.organization,
-      chatwootAccountId,
+      chatwootAccountId: accountIdToUse,
     });
     onOpenChange(false);
   });
+
+  const isSubmitDisabled = provisionMutation.isPending || (showAccountSelector && !selectedAccountId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,6 +101,47 @@ export const ProvisionEvolutionModal = ({
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4 py-4">
+          {/* Account Selector - Only shown when no chatwootAccountId is provided */}
+          {showAccountSelector && (
+            <div className="space-y-2">
+              <Label htmlFor="chatwootAccountId">Cuenta Chatwoot</Label>
+              {isLoadingAccounts ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Cargando cuentas...
+                </div>
+              ) : (
+                <Select
+                  value={selectedAccountId || ''}
+                  onValueChange={(value) => setValue('chatwootAccountId', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona una cuenta" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover">
+                    {accountsData?.data.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        <div className="flex items-center gap-2">
+                          <span>{account.name}</span>
+                          {account.tenant && (
+                            <span className="text-xs text-muted-foreground">
+                              ({account.tenant.name})
+                            </span>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {!accountsData?.data.length && !isLoadingAccounts && (
+                <p className="text-sm text-destructive">
+                  No hay cuentas Chatwoot disponibles
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="instanceName">Nombre de la Instancia</Label>
             <Input
@@ -120,7 +183,7 @@ export const ProvisionEvolutionModal = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={provisionMutation.isPending}>
+            <Button type="submit" disabled={isSubmitDisabled}>
               {provisionMutation.isPending && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}

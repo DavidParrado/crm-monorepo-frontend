@@ -28,12 +28,14 @@ import { useSuperAdminPermissions } from '@/hooks/useSuperAdminPermissions';
 import { IntegrationStatusBadge } from '@/components/integrations/IntegrationStatusBadge';
 import { InstanceNameDisplay } from '@/components/integrations/InstanceNameDisplay';
 import { DeleteIntegrationDialog } from '@/components/integrations/DeleteIntegrationDialog';
+import { ProvisionEvolutionModal } from '@/components/integrations/ProvisionEvolutionModal';
 import {
   MessageSquare,
   Smartphone,
   Trash2,
   Info,
   Server,
+  Plus,
 } from 'lucide-react';
 import { ChatwootAccount, EvolutionInstance } from '@/types/integrations';
 
@@ -44,6 +46,10 @@ const Integrations = () => {
   const [evolutionPage] = useState(1);
   const [accountToDelete, setAccountToDelete] = useState<ChatwootAccount | null>(null);
   const [instanceToDelete, setInstanceToDelete] = useState<EvolutionInstance | null>(null);
+  
+  // Evolution provisioning modals
+  const [provisionEvolutionOpen, setProvisionEvolutionOpen] = useState(false);
+  const [quickProvisionAccount, setQuickProvisionAccount] = useState<ChatwootAccount | null>(null);
 
   const { data: chatwootData, isLoading: isLoadingChatwoot } = useChatwootAccounts(chatwootPage);
   const { data: evolutionData, isLoading: isLoadingEvolution } = useEvolutionInstances(evolutionPage);
@@ -63,6 +69,13 @@ const Integrations = () => {
       await deleteInstanceMutation.mutateAsync(instanceToDelete.instanceName);
       setInstanceToDelete(null);
     }
+  };
+
+  // Check if account has evolution instances linked
+  const getAccountInstanceCount = (accountId: string): number => {
+    return evolutionData?.data.filter(
+      (instance) => instance.chatwootAccount?.id === accountId
+    ).length || 0;
   };
 
   return (
@@ -143,52 +156,79 @@ const Integrations = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {chatwootData.data.map((account) => (
-                      <TableRow key={account.id}>
-                        <TableCell className="font-medium">{account.name}</TableCell>
-                        <TableCell>
-                          {account.tenant ? (
-                            <Badge variant="secondary">{account.tenant.name}</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              Standalone
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <code className="text-sm bg-muted px-2 py-1 rounded">
-                            {account.accountId}
-                          </code>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(account.createdAt).toLocaleDateString('es-ES')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {account.tenant ? (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button variant="ghost" size="icon" disabled>
-                                    <Info className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Desaprovisionar desde Detalles del Tenant</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          ) : canEditTenants ? (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setAccountToDelete(account)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          ) : null}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {chatwootData.data.map((account) => {
+                      const instanceCount = getAccountInstanceCount(account.id);
+                      
+                      return (
+                        <TableRow key={account.id}>
+                          <TableCell className="font-medium">{account.name}</TableCell>
+                          <TableCell>
+                            {account.tenant ? (
+                              <Badge variant="secondary">{account.tenant.name}</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Standalone
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <code className="text-sm bg-muted px-2 py-1 rounded">
+                              {account.accountId}
+                            </code>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(account.createdAt).toLocaleDateString('es-ES')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Quick Provision WhatsApp Button */}
+                              {canEditTenants && instanceCount === 0 && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setQuickProvisionAccount(account)}
+                                      >
+                                        <Smartphone className="h-4 w-4 text-emerald-500" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Agregar WhatsApp</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                              
+                              {/* Delete / Info */}
+                              {account.tenant ? (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button variant="ghost" size="icon" disabled>
+                                        <Info className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Desaprovisionar desde Detalles del Tenant</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              ) : canEditTenants ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setAccountToDelete(account)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              ) : null}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
@@ -200,10 +240,20 @@ const Integrations = () => {
         <TabsContent value="evolution">
           <Card>
             <CardHeader>
-              <CardTitle>Instancias WhatsApp</CardTitle>
-              <CardDescription>
-                Todas las conexiones de WhatsApp vía Evolution API
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Instancias WhatsApp</CardTitle>
+                  <CardDescription>
+                    Todas las conexiones de WhatsApp vía Evolution API
+                  </CardDescription>
+                </div>
+                {canEditTenants && (
+                  <Button onClick={() => setProvisionEvolutionOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nueva Instancia
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingEvolution ? (
@@ -217,7 +267,7 @@ const Integrations = () => {
                   <Smartphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
                   <p className="text-lg">No hay instancias WhatsApp</p>
                   <p className="text-sm">
-                    Las instancias se crean desde la configuración de integraciones del Tenant
+                    Crea una nueva instancia para comenzar
                   </p>
                 </div>
               ) : (
@@ -289,6 +339,20 @@ const Integrations = () => {
         isLoading={deleteInstanceMutation.isPending}
         title="Eliminar Instancia WhatsApp"
         description="¿Estás seguro de eliminar esta instancia? La conexión se perderá permanentemente."
+      />
+
+      {/* Provision Evolution Modal - Global (with account selector) */}
+      <ProvisionEvolutionModal
+        open={provisionEvolutionOpen}
+        onOpenChange={setProvisionEvolutionOpen}
+      />
+
+      {/* Quick Provision Evolution Modal - Pre-selected account */}
+      <ProvisionEvolutionModal
+        open={!!quickProvisionAccount}
+        onOpenChange={(open) => !open && setQuickProvisionAccount(null)}
+        chatwootAccountId={quickProvisionAccount?.id}
+        accountName={quickProvisionAccount?.name}
       />
     </div>
   );

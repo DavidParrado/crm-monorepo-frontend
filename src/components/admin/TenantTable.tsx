@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MoreHorizontal, Pencil, Trash2, Key, RotateCcw, Flame } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MoreHorizontal, Pencil, Trash2, Key, RotateCcw, Flame, Eye } from "lucide-react";
 import { Tenant } from "@/types/tenant";
 import { TenantTab } from "@/hooks/useTenants";
 import { useSuperAdminPermissions } from "@/hooks/useSuperAdminPermissions";
@@ -45,6 +46,7 @@ export const TenantTable = ({
   onRestore,
   onHardDelete,
 }: TenantTableProps) => {
+  const navigate = useNavigate();
   const { canEditTenants, canSoftDelete, canResetPassword, canRestore, canHardDelete } = useSuperAdminPermissions();
   const isTrashView = activeTab === 'trash';
 
@@ -170,6 +172,13 @@ export const TenantTable = ({
                     ) : (
                       // Active view actions
                       <>
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/admin/tenants/${tenant.id}`)}
+                          className="text-slate-800 focus:text-slate-100 focus:bg-slate-800"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver Detalles
+                        </DropdownMenuItem>
                         {canEditTenants && (
                           <DropdownMenuItem
                             onClick={() => onEdit(tenant)}
