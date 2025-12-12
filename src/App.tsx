@@ -22,6 +22,7 @@ import Kanban from "./pages/Kanban";
 import NotFound from "./pages/NotFound";
 import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import Tenants from "./pages/admin/Tenants";
+import TenantDetail from "./pages/admin/TenantDetail";
 import Team from "./pages/admin/Team";
 import AdminIntegrations from "./pages/admin/Integrations";
 
@@ -63,6 +64,7 @@ const App = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="/admin/tenants" replace />} />
             <Route path="tenants" element={<Tenants />} />
+            <Route path="tenants/:id" element={<TenantDetail />} />
             <Route path="team" element={<Team />} />
             <Route path="integrations" element={<AdminIntegrations />} />
           </Route>

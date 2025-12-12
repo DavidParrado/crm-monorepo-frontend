@@ -17,6 +17,7 @@ export const provisionChatwootSchema = z.object({
 export const provisionEvolutionSchema = z.object({
   instanceName: z.string().min(2, 'El nombre de la instancia es requerido'),
   organization: z.string().optional(),
+  chatwootAccountId: z.string().optional(),
 });
 
 export type ProvisionChatwootFormData = z.infer<typeof provisionChatwootSchema>;
