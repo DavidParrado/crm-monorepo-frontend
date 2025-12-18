@@ -66,11 +66,17 @@ export const ContactList = ({
                   activeContactId === contact.id && 'bg-accent/50'
                 )}
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
-                    {getInitials(contact.firstName, contact.lastName)}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                      {getInitials(contact.firstName, contact.lastName)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Unread indicator */}
+                  {contact.hasUnread && (
+                    <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-destructive border-2 border-background" />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">
                     {contact.firstName} {contact.lastName}

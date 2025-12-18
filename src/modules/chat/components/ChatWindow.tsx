@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, SendHorizontal, Loader2, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { MessageBubble } from './MessageBubble';
@@ -28,7 +27,8 @@ export const ChatWindow = ({
   onBack,
 }: ChatWindowProps) => {
   const [inputValue, setInputValue] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -49,17 +49,25 @@ export const ChatWindow = ({
     }
   };
 
-  // Scroll to bottom when new messages arrive
+  // Smooth scroll to bottom when new messages arrive
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
+
+  // Scroll to bottom on new messages
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    scrollToBottom('smooth');
   }, [messages]);
 
+  // Scroll to bottom on initial load (instant)
+  useEffect(() => {
+    scrollToBottom('instant');
+  }, []);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-card">
+      <div className="flex items-center gap-3 p-4 border-b bg-card flex-shrink-0">
         <Button
           variant="ghost"
           size="icon"
@@ -89,8 +97,11 @@ export const ChatWindow = ({
         )}
       </div>
 
-      {/* Messages */}
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      {/* Messages - Fixed height scrollable container */}
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 min-h-0"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -110,12 +121,13 @@ export const ChatWindow = ({
                 isOwn={message.senderId === currentUserId}
               />
             ))}
+            <div ref={messagesEndRef} />
           </div>
         )}
-      </ScrollArea>
+      </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t bg-card">
+      <div className="p-4 border-t bg-card flex-shrink-0">
         <div className="flex items-center gap-2">
           <Input
             ref={inputRef}

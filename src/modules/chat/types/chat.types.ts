@@ -6,6 +6,7 @@ export interface ChatUser {
   username: string;
   role: { id: number; name: string };
   ext?: string;
+  hasUnread?: boolean; // Indicates unread messages in conversation
 }
 
 // Conversation

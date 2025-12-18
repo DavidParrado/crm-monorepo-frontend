@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
+import { ChatSocketProvider } from "@/modules/chat/providers/ChatSocketProvider";
 import { MainLayout } from "./components/layout/MainLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
 import Login from "./pages/Login";
@@ -42,6 +43,7 @@ const App = () => {
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <ChatSocketProvider>
       <BrowserRouter>
         <Routes>
           {/* Regular CRM Routes */}
@@ -74,6 +76,7 @@ const App = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
+      </ChatSocketProvider>
     </TooltipProvider>
   </QueryClientProvider>
   );
