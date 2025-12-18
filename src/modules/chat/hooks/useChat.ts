@@ -1,31 +1,17 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { chatService } from '../services/chat.service';
-import { chatSocketAdapter } from '../adapters/chat.adapter';
-import type { Message, ChatUser, Conversation, SocketStatus } from '../types/chat.types';
+import { useChatSocket } from './useChatSocket';
+import type { ChatUser, Conversation } from '../types/chat.types';
 import type { User } from '@/types/user';
 
 const CONTACTS_LIMIT = 20;
 const MESSAGES_LIMIT = 30;
 
-// Helper to get tenant subdomain from URL or localStorage
-const getTenantSubdomain = (): string => {
-  // Try to get from current hostname (subdomain.domain.com)
-  const hostname = window.location.hostname;
-  const parts = hostname.split('.');
-  if (parts.length > 2) {
-    return parts[0];
-  }
-  // Fallback to localStorage or default
-  return localStorage.getItem('tenant_subdomain') || 'default';
-};
-
 export const useChat = () => {
-  const queryClient = useQueryClient();
-  const { token, user, isSuperAdmin } = useAuthStore();
-  const tenantId = getTenantSubdomain();
+  const { user, isSuperAdmin } = useAuthStore();
   
   // Type guard to get regular user ID
   const currentUserId = !isSuperAdmin && user ? (user as User).id : undefined;
@@ -33,82 +19,9 @@ export const useChat = () => {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [activeContact, setActiveContact] = useState<ChatUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [socketStatus, setSocketStatus] = useState<SocketStatus>('disconnected');
-  
-  const messageListenerRef = useRef<((message: Message) => void) | null>(null);
 
-  // ============ Socket Connection ============
-  useEffect(() => {
-    if (!token || !tenantId || isSuperAdmin) return;
-
-    setSocketStatus('connecting');
-    const socket = chatSocketAdapter.connect(token, tenantId);
-
-    socket.on('connect', () => {
-      setSocketStatus('connected');
-      console.log('Chat socket connected');
-    });
-
-    socket.on('disconnect', () => {
-      setSocketStatus('disconnected');
-      console.log('Chat socket disconnected');
-    });
-
-    socket.on('connect_error', (error) => {
-      setSocketStatus('disconnected');
-      console.error('Socket connection error:', error);
-    });
-
-    return () => {
-      chatSocketAdapter.disconnect();
-    };
-  }, [token, tenantId, isSuperAdmin]);
-
-  // ============ Socket Message Listener ============
-  useEffect(() => {
-    if (socketStatus !== 'connected') return;
-
-    const handleNewMessage = (message: Message) => {
-      if (message.conversationId === activeConversationId) {
-        // Add message to active conversation cache
-        queryClient.setQueryData(
-          ['chat-messages', activeConversationId],
-          (oldData: any) => {
-            if (!oldData) return oldData;
-            const firstPage = oldData.pages[0];
-            return {
-              ...oldData,
-              pages: [
-                {
-                  ...firstPage,
-                  data: [message, ...firstPage.data],
-                  total: firstPage.total + 1,
-                },
-                ...oldData.pages.slice(1),
-              ],
-            };
-          }
-        );
-      } else {
-        // Show toast notification for other conversations
-        toast.info(`${message.sender.firstName} ${message.sender.lastName}`, {
-          description: message.content.slice(0, 50) + (message.content.length > 50 ? '...' : ''),
-        });
-      }
-
-      // Invalidate contacts to update order/unread
-      queryClient.invalidateQueries({ queryKey: ['chat-contacts'] });
-    };
-
-    messageListenerRef.current = handleNewMessage;
-    chatSocketAdapter.onNewMessage(handleNewMessage);
-
-    return () => {
-      if (messageListenerRef.current) {
-        chatSocketAdapter.offNewMessage(messageListenerRef.current);
-      }
-    };
-  }, [socketStatus, activeConversationId, queryClient]);
+  // Socket hook with active conversation context
+  const { socketStatus, sendMessage } = useChatSocket(activeConversationId);
 
   // ============ Contacts Query ============
   const contactsQuery = useInfiniteQuery({
@@ -166,8 +79,8 @@ export const useChat = () => {
 
   const handleSendMessage = useCallback((content: string) => {
     if (!activeConversationId || !content.trim()) return;
-    chatSocketAdapter.sendMessage(activeConversationId, content.trim());
-  }, [activeConversationId]);
+    sendMessage(activeConversationId, content);
+  }, [activeConversationId, sendMessage]);
 
   const handleBackToContacts = useCallback(() => {
     setActiveConversationId(null);
