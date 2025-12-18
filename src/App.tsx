@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import Imports from "./pages/Imports";
 import VoIP from "./pages/VoIP";
 import Kanban from "./pages/Kanban";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import SuperAdminLogin from "./pages/admin/SuperAdminLogin";
 import Tenants from "./pages/admin/Tenants";
@@ -57,6 +58,7 @@ const App = () => {
             <Route path="/imports" element={<Imports />} />
             <Route path="/voip" element={<VoIP />} />
             <Route path="/kanban" element={<Kanban />} />
+            <Route path="/chat" element={<Chat />} />
           </Route>
 
           {/* Super Admin Control Plane Routes */}
