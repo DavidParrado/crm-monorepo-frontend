@@ -10,6 +10,7 @@ import {
   UserCircle,
   Phone,
   KanbanSquare,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +36,7 @@ const mainItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
   { title: "Kanban", url: "/kanban", icon: KanbanSquare, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
   { title: "Calendario", url: "/calendar", icon: Calendar, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
+  { title: "Chat", url: "/chat", icon: MessageCircle, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
   { title: "Mi Perfil", url: "/profile", icon: UserCircle, roles: [RoleEnum.Admin, RoleEnum.TeamLeader, RoleEnum.Agent, RoleEnum.Auditor] },
 ];
 
