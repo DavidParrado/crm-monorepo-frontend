@@ -44,6 +44,7 @@ export interface ConversationResponse {
   name: string; // Pre-resolved name (Group Name or Contact Name)
   updatedAt: string; // ISO String
   unreadCount: number;
+  lastReadAt: string | null; // ISO Date string for the Separator logic
   lastMessage: LastMessageResponse | null;
   // Present only if type === 'DIRECT'
   contact?: ParticipantResponse | null;
@@ -92,4 +93,21 @@ export type SocketStatus = 'connected' | 'disconnected' | 'connecting';
 export interface UserStatusPayload {
   userId: number;
   isOnline: boolean;
+}
+
+// Socket Event Types for Read Receipts
+export type MarkAsReadSocketPayload = number;
+
+// Payload received from server: socket.on('conversationRead', ...)
+export interface ConversationReadEvent {
+  conversationId: number;
+  readByUserId: number; // The user who just read the chat
+  type: ConversationType;
+}
+
+// HTTP Response Type for markAsRead fallback
+export interface MarkAsReadResponse {
+  success: boolean;
+  conversationId: number;
+  type: ConversationType;
 }

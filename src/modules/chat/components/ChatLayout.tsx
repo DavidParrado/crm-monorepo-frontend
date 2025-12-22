@@ -31,6 +31,7 @@ export const ChatLayout = () => {
     handleSendMessage,
     handleBackToConversations,
     handleOpenNewChatDialog,
+    markAsRead,
   } = useChat();
 
   const hasActiveChat = !!activeConversation;
@@ -74,6 +75,7 @@ export const ChatLayout = () => {
               onSendMessage={handleSendMessage}
               onDeleteGroup={handleDeleteGroup}
               onBack={handleBackToConversations}
+              onMarkAsRead={markAsRead}
             />
           ) : (
             <ChatEmptyState />

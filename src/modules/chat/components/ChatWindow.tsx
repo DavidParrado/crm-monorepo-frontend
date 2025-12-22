@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronLeft, SendHorizontal, Loader2, WifiOff, Trash2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ interface ChatWindowProps {
   onSendMessage: (content: string) => void;
   onDeleteGroup: (conversationId: number) => void;
   onBack: () => void;
+  onMarkAsRead: (conversationId: number) => void;
 }
 
 export const ChatWindow = ({
@@ -41,6 +42,7 @@ export const ChatWindow = ({
   onSendMessage,
   onDeleteGroup,
   onBack,
+  onMarkAsRead,
 }: ChatWindowProps) => {
   const [inputValue, setInputValue] = useState('');
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -70,6 +72,13 @@ export const ChatWindow = ({
     }
   };
 
+  // Passive read trigger: mark as read when user focuses the input
+  const handleInputFocus = () => {
+    if (conversation.unreadCount > 0) {
+      onMarkAsRead(conversation.id);
+    }
+  };
+
   // Smooth scroll to bottom when new messages arrive
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -84,6 +93,27 @@ export const ChatWindow = ({
   useEffect(() => {
     scrollToBottom('instant');
   }, []);
+
+  // Calculate the index where "New Messages" separator should appear
+  const newMessagesSeparatorIndex = useMemo(() => {
+    if (!conversation.lastReadAt || conversation.unreadCount === 0) return -1;
+    
+    const lastReadDate = new Date(conversation.lastReadAt);
+    
+    // Find the first message that is:
+    // 1. After lastReadAt
+    // 2. NOT from the current user
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      const messageDate = new Date(message.createdAt);
+      
+      if (messageDate > lastReadDate && message.senderId !== currentUserId) {
+        return i;
+      }
+    }
+    
+    return -1;
+  }, [messages, conversation.lastReadAt, conversation.unreadCount, currentUserId]);
 
   // Check if contact is online (for DIRECT chats)
   const isContactOnline = conversation.type === 'DIRECT' && conversation.contact
@@ -196,12 +226,23 @@ export const ChatWindow = ({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOwn={message.senderId === currentUserId}
-              />
+            {messages.map((message, index) => (
+              <div key={message.id}>
+                {/* New Messages Separator */}
+                {index === newMessagesSeparatorIndex && (
+                  <div className="flex items-center gap-2 my-4">
+                    <div className="flex-1 h-px bg-primary/30" />
+                    <span className="text-xs font-medium text-primary px-2 py-1 bg-primary/10 rounded-full">
+                      Mensajes Nuevos
+                    </span>
+                    <div className="flex-1 h-px bg-primary/30" />
+                  </div>
+                )}
+                <MessageBubble
+                  message={message}
+                  isOwn={message.senderId === currentUserId}
+                />
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -217,6 +258,7 @@ export const ChatWindow = ({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
+            onFocus={handleInputFocus}
             disabled={socketStatus !== 'connected'}
             className="flex-1"
           />

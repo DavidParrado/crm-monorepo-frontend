@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AppNotification } from "@/types/notification";
 import * as notificationService from "@/services/notificationService";
+import { useNotificationStore } from "@/store/notificationStore";
 import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 12;
@@ -11,6 +12,9 @@ export const useNotificationsPage = () => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  
+  // Get the store's refresh function to keep bell in sync
+  const { fetchNotifications: refreshStoreNotifications } = useNotificationStore();
   
   const currentPage = parseInt(searchParams.get("page") || "1", 10);
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -49,6 +53,8 @@ export const useNotificationsPage = () => {
         setNotifications(prev => 
           prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
         );
+        // Sync with store to update bell count
+        refreshStoreNotifications();
       } catch (error) {
         console.error('Error marking notification as read:', error);
         toast.error("Error al marcar como leída");
@@ -61,7 +67,9 @@ export const useNotificationsPage = () => {
     try {
       await notificationService.deleteNotification(id);
       toast.success("Notificación eliminada");
-      fetchNotifications();
+      // Refetch both local and store notifications
+      await fetchNotifications();
+      await refreshStoreNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);
       toast.error("No se pudo eliminar la notificación");
@@ -75,7 +83,9 @@ export const useNotificationsPage = () => {
     try {
       await notificationService.deleteReadNotifications();
       toast.success("Notificaciones leídas eliminadas");
-      fetchNotifications();
+      // Refetch both local and store notifications
+      await fetchNotifications();
+      await refreshStoreNotifications();
     } catch (error) {
       console.error('Error deleting read notifications:', error);
       toast.error("No se pudieron eliminar las notificaciones leídas");

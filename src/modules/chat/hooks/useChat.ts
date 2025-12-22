@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
@@ -23,8 +23,11 @@ export const useChat = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [contactSearchQuery, setContactSearchQuery] = useState('');
   const [isNewChatDialogOpen, setIsNewChatDialogOpen] = useState(false);
+  
+  // Track if we've already marked this conversation as read (to avoid multiple emissions)
+  const markedAsReadRef = useRef<number | null>(null);
 
-  const { socketStatus, sendMessage } = useChatSocket(activeConversation?.id ?? null);
+  const { socketStatus, sendMessage, emitMarkAsRead } = useChatSocket(activeConversation?.id ?? null);
 
   // Conversations Query
   const conversationsQuery = useInfiniteQuery({
@@ -102,20 +105,53 @@ export const useChat = () => {
     onError: () => toast.error('Error al eliminar el grupo'),
   });
 
-  // Mark as Read
+  // Mark as Read Mutation (HTTP fallback)
   const markAsReadMutation = useMutation({
     mutationFn: (conversationId: number) => chatService.markAsRead(conversationId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['chat-conversations'] }),
   });
 
-  useEffect(() => {
-    if (activeConversation?.id && activeConversation.unreadCount > 0) {
-      markAsReadMutation.mutate(activeConversation.id);
+  // Mark conversation as read - socket first, HTTP fallback
+  const markAsRead = useCallback((conversationId: number) => {
+    // Avoid duplicate calls for the same conversation
+    if (markedAsReadRef.current === conversationId) return;
+    markedAsReadRef.current = conversationId;
+
+    // Optimistic update - immediately set unreadCount to 0
+    setActiveConversation(prev => 
+      prev && prev.id === conversationId 
+        ? { ...prev, unreadCount: 0, lastReadAt: new Date().toISOString() } 
+        : prev
+    );
+
+    // Also update the conversations cache optimistically
+    queryClient.setQueryData(['chat-conversations'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page: any) => ({
+          ...page,
+          data: page.data.map((conv: ConversationResponse) =>
+            conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+          ),
+        })),
+      };
+    });
+
+    // Priority: Socket emit (fire-and-forget)
+    if (socketStatus === 'connected') {
+      const emitted = emitMarkAsRead(conversationId);
+      if (emitted) return;
     }
-  }, [activeConversation?.id]);
+
+    // Fallback: HTTP request
+    markAsReadMutation.mutate(conversationId);
+  }, [socketStatus, emitMarkAsRead, markAsReadMutation, queryClient]);
 
   // Handlers
   const handleSelectConversation = useCallback((conversation: ConversationResponse) => {
+    // Reset the marked ref when switching conversations
+    markedAsReadRef.current = null;
     setActiveConversation(conversation);
   }, []);
 
@@ -136,7 +172,11 @@ export const useChat = () => {
     sendMessage(activeConversation.id, content);
   }, [activeConversation?.id, sendMessage]);
 
-  const handleBackToConversations = useCallback(() => setActiveConversation(null), []);
+  const handleBackToConversations = useCallback(() => {
+    markedAsReadRef.current = null;
+    setActiveConversation(null);
+  }, []);
+
   const handleOpenNewChatDialog = useCallback(() => {
     setContactSearchQuery('');
     setIsNewChatDialogOpen(true);
@@ -161,5 +201,6 @@ export const useChat = () => {
     setSearchQuery, setContactSearchQuery, setIsNewChatDialogOpen,
     handleSelectConversation, handleSelectContact, handleCreateGroup, handleDeleteGroup,
     handleSendMessage, handleBackToConversations, handleOpenNewChatDialog,
+    markAsRead,
   };
 };
