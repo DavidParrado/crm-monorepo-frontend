@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Check, CheckCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Message } from '../types/chat.types';
 
@@ -27,14 +28,22 @@ export const MessageBubble = ({ message, isOwn }: MessageBubbleProps) => {
           </p>
         )}
         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-        <p
+        <div
           className={cn(
-            'text-xs mt-1',
+            'flex items-center justify-end gap-1 mt-1',
             isOwn ? 'text-primary-foreground/50' : 'text-muted-foreground/70'
           )}
         >
-          {formattedTime}
-        </p>
+          <span className="text-xs">{formattedTime}</span>
+          {/* Read receipts - only show for own messages */}
+          {isOwn && (
+            message.isRead ? (
+              <CheckCheck className="h-3.5 w-3.5 text-blue-400" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )
+          )}
+        </div>
       </div>
     </div>
   );
