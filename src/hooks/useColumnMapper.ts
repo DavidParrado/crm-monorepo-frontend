@@ -43,10 +43,11 @@ export const useColumnMapper = ({ preview, file, onSuccess }: UseColumnMapperPro
 
       const result = await uploadFile(formData);
 
-      toast.success(`${result.successful} registros exitosos, ${result.failed} fallidos`);
+      // Response is now immediate - notify user and pass importId
+      toast.info("Archivo recibido. El procesamiento ha comenzado.");
       onSuccess(result);
     } catch (error) {
-      toast.error("No se pudo procesar la importación");
+      toast.error("No se pudo iniciar la importación");
     } finally {
       setIsSubmitting(false);
     }

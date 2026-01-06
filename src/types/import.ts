@@ -13,11 +13,39 @@ export interface ImportErrorDetail {
   messages: string[];
 }
 
+// Estado de importación (Enum alineado con backend)
+export type ImportStatus = 
+  | 'Pending' 
+  | 'Processing' 
+  | 'Completed' 
+  | 'Completed with errors' 
+  | 'Failed';
+
+// Respuesta del POST /imports/upload (ahora es inmediata)
 export interface ImportUploadResponse {
   message: string;
-  successful: number;
-  failed: number;
-  errors?: ImportErrorDetail[];
+  importId: number;
+  status: ImportStatus;
+}
+
+// Respuesta del GET /imports/status/:id (polling)
+export interface ImportStatusResponse {
+  id: number;
+  status: ImportStatus;
+  progress: number; // 0-100
+  source: 'redis' | 'db';
+  detail?: string;
+  updatedAt?: string;
+  successfulRecords?: number;
+  failedRecords?: number;
+}
+
+// Payload de notificación WebSocket IMPORT_COMPLETED
+export interface ImportCompletedPayload {
+  importId: number;
+  fileName: string;
+  successfulCount: number;
+  failedCount: number;
 }
 
 export interface Import {
@@ -26,7 +54,7 @@ export interface Import {
   totalRows?: number;
   successfulRecords: number;
   failedRecords: number;
-  status: 'Processing' | 'Completed' | 'Completed with errors' | 'Failed';
+  status: ImportStatus;
   importedAt: string;
   userId: number;
   user?: {

@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, Loader2 } from "lucide-react";
 import { ColumnMapper } from "./ColumnMapper";
 import { ImportResultFeedback } from "./ImportResultFeedback";
+import { ImportProgressTracker } from "./ImportProgressTracker";
 import { useImportUploader } from "@/hooks/useImportUploader";
 
 interface ImportUploaderProps {
@@ -13,35 +14,52 @@ export const ImportUploader = ({ onSuccess }: ImportUploaderProps) => {
   const {
     selectedFile,
     preview,
-    importResult,
+    activeImportId,
+    finalResult,
     isLoading,
     handleFileSelect,
     handlePreview,
     handleReset,
-    handleImportSuccess,
+    handleUploadSuccess,
+    handleProgressComplete,
     handleCloseFeedback,
   } = useImportUploader({ onSuccess });
 
-  if (importResult) {
+  // Step 4: Show final result
+  if (finalResult) {
     return (
       <ImportResultFeedback
-        result={importResult}
+        result={finalResult}
         onClose={handleCloseFeedback}
       />
     );
   }
 
+  // Step 3: Show progress tracker during async processing
+  if (activeImportId) {
+    return (
+      <ImportProgressTracker
+        importId={activeImportId}
+        fileName={selectedFile?.name}
+        onComplete={handleProgressComplete}
+        onNewImport={handleReset}
+      />
+    );
+  }
+
+  // Step 2: Show column mapper after preview
   if (preview && selectedFile) {
     return (
       <ColumnMapper
         preview={preview}
         file={selectedFile}
         onCancel={handleReset}
-        onSuccess={handleImportSuccess}
+        onSuccess={handleUploadSuccess}
       />
     );
   }
 
+  // Step 1: File selection
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -80,6 +98,7 @@ export const ImportUploader = ({ onSuccess }: ImportUploaderProps) => {
           <li>Selecciona un archivo CSV con los datos de tus clientes</li>
           <li>En el siguiente paso podrás mapear las columnas a los campos del sistema</li>
           <li>Los campos disponibles son: Nombre, Apellido, Email, Teléfono, País, TP y Campaña</li>
+          <li>El procesamiento se realizará en segundo plano - puedes navegar mientras se completa</li>
         </ul>
       </div>
     </div>
