@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { parsePreview } from "@/services/importService";
-import { ImportPreview, ImportUploadResponse } from "@/types/import";
+import { ImportPreview, ImportUploadResponse, ImportStatusResponse } from "@/types/import";
 import { toast } from "sonner";
 
 interface UseImportUploaderProps {
@@ -10,7 +10,8 @@ interface UseImportUploaderProps {
 export const useImportUploader = ({ onSuccess }: UseImportUploaderProps) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [importResult, setImportResult] = useState<ImportUploadResponse | null>(null);
+  const [activeImportId, setActiveImportId] = useState<number | null>(null);
+  const [finalResult, setFinalResult] = useState<ImportStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,12 +46,19 @@ export const useImportUploader = ({ onSuccess }: UseImportUploaderProps) => {
   const handleReset = useCallback(() => {
     setSelectedFile(null);
     setPreview(null);
-    setImportResult(null);
+    setActiveImportId(null);
+    setFinalResult(null);
   }, []);
 
-  const handleImportSuccess = useCallback((result: ImportUploadResponse) => {
-    setImportResult(result);
+  const handleUploadSuccess = useCallback((result: ImportUploadResponse) => {
+    // Store the importId to start tracking progress
+    setActiveImportId(result.importId);
     setPreview(null);
+  }, []);
+
+  const handleProgressComplete = useCallback((result: ImportStatusResponse) => {
+    setFinalResult(result);
+    setActiveImportId(null);
     onSuccess?.();
   }, [onSuccess]);
 
@@ -61,12 +69,14 @@ export const useImportUploader = ({ onSuccess }: UseImportUploaderProps) => {
   return {
     selectedFile,
     preview,
-    importResult,
+    activeImportId,
+    finalResult,
     isLoading,
     handleFileSelect,
     handlePreview,
     handleReset,
-    handleImportSuccess,
+    handleUploadSuccess,
+    handleProgressComplete,
     handleCloseFeedback,
   };
 };

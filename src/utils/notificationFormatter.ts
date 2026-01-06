@@ -18,6 +18,7 @@ const notificationTypeLabels: Record<NotificationType, string> = {
   [NotificationType.CLIENT_ASSIGNED]: 'Cliente Asignado',
   [NotificationType.CLIENT_CONVERSION_CONFIRMED]: 'Conversión Confirmada',
   [NotificationType.CLIENT_CONVERSION_REJECTED]: 'Conversión Rechazada',
+  [NotificationType.IMPORT_COMPLETED]: 'Importación Completada',
 };
 
 export function getNotificationTypeLabel(type: NotificationType): string {
@@ -99,6 +100,17 @@ export function formatNotification(notification: AppNotification): FormattedNoti
         title: 'Conversión Rechazada',
         description: `La propuesta de conversión del cliente ${payload.clientName} fue rechazada`,
         icon: 'warning',
+      };
+    }
+
+    case NotificationType.IMPORT_COMPLETED: {
+      const statusText = payload.failedCount > 0 
+        ? `${payload.successfulCount?.toLocaleString()} exitosos, ${payload.failedCount?.toLocaleString()} fallidos`
+        : `${payload.successfulCount?.toLocaleString()} registros importados`;
+      return {
+        title: 'Importación Finalizada',
+        description: `"${payload.fileName}": ${statusText}`,
+        icon: payload.failedCount > 0 ? 'warning' : 'success',
       };
     }
 

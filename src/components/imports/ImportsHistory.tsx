@@ -51,13 +51,14 @@ export const ImportsHistory = ({ imports, isLoading, onDelete }: ImportsHistoryP
 
   const getStatusBadge = (status: Import['status']) => {
     const variants: Record<Import['status'], { variant: "default" | "secondary" | "destructive" | "outline"; label: string }> = {
+      Pending: { variant: "secondary", label: "En Cola" },
       Processing: { variant: "default", label: "Procesando" },
       Completed: { variant: "outline", label: "Completado" },
       'Completed with errors': { variant: "secondary", label: "Completado con errores" },
       Failed: { variant: "destructive", label: "Fallido" }
     };
 
-    const config = variants[status];
+    const config = variants[status] || { variant: "secondary", label: status };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 

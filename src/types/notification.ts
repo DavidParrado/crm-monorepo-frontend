@@ -70,6 +70,16 @@ type ClientConversionRejectedNotification = BaseNotification & {
   };
 };
 
+type ImportCompletedNotification = BaseNotification & {
+  type: NotificationType.IMPORT_COMPLETED;
+  payload: {
+    importId: number;
+    fileName: string;
+    successfulCount: number;
+    failedCount: number;
+  };
+};
+
 export type AppNotification =
   | AppointmentReminderNotification
   | AppointmentCreatedNotification
@@ -78,7 +88,8 @@ export type AppNotification =
   | AppointmentCancelledNotification
   | ClientAssignedNotification
   | ClientConversionConfirmedNotification
-  | ClientConversionRejectedNotification;
+  | ClientConversionRejectedNotification
+  | ImportCompletedNotification;
 
 // Alias para compatibilidad
 export type Notification = AppNotification;

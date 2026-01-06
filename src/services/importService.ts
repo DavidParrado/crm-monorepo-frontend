@@ -1,5 +1,5 @@
 import { http } from "@/lib/http";
-import { Import, ImportPreview, ImportUploadResponse } from "@/types/import";
+import { Import, ImportPreview, ImportUploadResponse, ImportStatusResponse } from "@/types/import";
 
 /**
  * Uploads a file for preview/parsing.
@@ -10,9 +10,18 @@ export const parsePreview = (formData: FormData): Promise<ImportPreview> => {
 
 /**
  * Uploads the file with mapping to process the import.
+ * Now returns immediately with importId for async processing.
  */
 export const uploadFile = (formData: FormData): Promise<ImportUploadResponse> => {
   return http.postForm<ImportUploadResponse>("imports/upload", formData);
+};
+
+/**
+ * Gets the status of an import job (polling endpoint).
+ * Queries Redis if job is active, or DB if completed.
+ */
+export const getImportStatus = (id: number): Promise<ImportStatusResponse> => {
+  return http.get<ImportStatusResponse>(`imports/status/${id}`);
 };
 
 /**
